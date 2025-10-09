@@ -1,6 +1,15 @@
 const dummy = [
   {
     id: 1,
+    company: "Booz Allen Hamilton",
+    title: "Software Engineer II",
+    description:
+      "Building and scaling next-generation APIs and microservices with a focus on AI-driven solutions, data pipelines, and automation.",
+    startDate: "2024/11",
+    endDate: "",
+  },
+  {
+    id: 2,
     company: "Listen360 / EverCommerce",
     title: "Frontend Engineer",
     description:
@@ -9,7 +18,7 @@ const dummy = [
     endDate: "2024/07",
   },
   {
-    id: 2,
+    id: 3,
     company: "Cricket Wireless / AT&T",
     title: "Senior Frontend Developer",
     description:
@@ -19,7 +28,7 @@ const dummy = [
   },
 
   {
-    id: 3,
+    id: 4,
     company: "BlueAcorn",
     title: "Frontend Developer",
     description:
@@ -28,7 +37,7 @@ const dummy = [
     endDate: "2016/06",
   },
   {
-    id: 4,
+    id: 5,
     company: "JobMarketMaker / CareerBuilder",
     title: "Frontend Developer",
     description:
