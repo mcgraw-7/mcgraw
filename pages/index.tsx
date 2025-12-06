@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
@@ -8,20 +9,106 @@ const AsteroidsGame = dynamic(() => import('../app/components/asteroids'), {
 });
 
 export default function Home() {
+  const [isTerminalOpen, setIsTerminalOpen] = useState(true);
+  const [isClosing, setIsClosing] = useState(false);
+
+  const handleCloseTerminal = () => {
+    setIsClosing(true);
+    // After animation completes, hide terminal
+    setTimeout(() => {
+      setIsTerminalOpen(false);
+      setIsClosing(false);
+    }, 400);
+  };
+
+  const handleOpenTerminal = () => {
+    setIsTerminalOpen(true);
+  };
+
   return (
-    <main className="h-screen bg-black overflow-hidden flex items-center p-8 relative">
+    <main className="h-screen bg-black overflow-hidden flex items-center justify-center p-8 relative">
       {/* Asteroids Game Background */}
       <AsteroidsGame />
       
+      {/* CRT Turn-off animation styles */}
+      <style jsx>{`
+        @keyframes crt-off {
+          0% {
+            transform: scale(1, 1);
+            filter: brightness(1);
+          }
+          50% {
+            transform: scale(1, 0.005);
+            filter: brightness(2);
+          }
+          100% {
+            transform: scale(0, 0);
+            filter: brightness(0);
+          }
+        }
+        
+        @keyframes crt-on {
+          0% {
+            transform: scale(0, 0.005);
+            filter: brightness(2);
+          }
+          50% {
+            transform: scale(1, 0.005);
+            filter: brightness(2);
+          }
+          100% {
+            transform: scale(1, 1);
+            filter: brightness(1);
+          }
+        }
+        
+        .crt-closing {
+          animation: crt-off 0.4s ease-in forwards;
+          transform-origin: center center;
+        }
+        
+        .crt-opening {
+          animation: crt-on 0.4s ease-out forwards;
+          transform-origin: center center;
+        }
+        
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow: 0 0 10px 2px rgba(57, 255, 20, 0.6), 0 0 20px 4px rgba(57, 255, 20, 0.3);
+          }
+          50% {
+            box-shadow: 0 0 15px 4px rgba(57, 255, 20, 0.8), 0 0 30px 8px rgba(57, 255, 20, 0.4);
+          }
+        }
+        
+        .reopen-dot {
+          animation: pulse-glow 2s ease-in-out infinite;
+        }
+      `}</style>
+      
+      {/* Reopen dot - shown when terminal is closed */}
+      {!isTerminalOpen && (
+        <button
+          onClick={handleOpenTerminal}
+          className="reopen-dot w-4 h-4 rounded-full bg-neonGreen cursor-pointer z-20 hover:scale-150 transition-transform duration-200"
+          title="Click to reopen terminal"
+        />
+      )}
+      
       {/* Main Terminal Interface */}
-      <div className="relative bg-gray-900 border-2 border-gray-700 max-w-4xl w-full h-[calc(100vh-64px)] transition-all duration-300 hover:border-orange-500 flex flex-col z-10">
+      {isTerminalOpen && (
+        <div className={`relative bg-gray-900 border-2 border-gray-700 max-w-4xl w-full h-[calc(100vh-64px)] transition-all duration-300 hover:border-orange-500 flex flex-col z-10 ${isClosing ? 'crt-closing' : 'crt-opening'}`}>
         {/* Accent bars */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-orange-500 to-transparent"></div>
         <div className="absolute bottom-0 left-0 w-1 h-full bg-gradient-to-b from-neonGreen via-neonGreen to-transparent opacity-30"></div>
         
         {/* Terminal Header Bar */}
         <div className="flex items-center gap-2 px-4 py-3 bg-gray-800 border-b border-gray-700 flex-shrink-0">
-          <div className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-400 transition-colors cursor-pointer"></div>
+          <button 
+            onClick={handleCloseTerminal}
+            className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-400 transition-colors cursor-pointer hover:scale-110"
+            title="Close terminal"
+          />
           <div className="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-400 transition-colors cursor-pointer"></div>
           <div className="w-3 h-3 rounded-full bg-green-500 hover:bg-green-400 transition-colors cursor-pointer"></div>
           <span className="ml-4 text-gray-500 text-xs font-mono">mcgraw@portfolio ~ home</span>
@@ -164,6 +251,7 @@ export default function Home() {
           <span className="text-gray-600 text-xs font-mono">v1.0.0</span>
         </div>
       </div>
+      )}
 
       {/* Scanline effect overlay */}
       <div className="pointer-events-none fixed inset-0 z-50 opacity-[0.03]" style={{
