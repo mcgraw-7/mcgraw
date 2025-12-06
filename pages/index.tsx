@@ -10,7 +10,7 @@ export default function Home() {
           <span className="text-orange-500">&gt;</span> m.mcgraw
         </h1>
         <p className="text-neonGreen text-sm md:text-base max-w-2xl">
-          software engineer — building enterprise solutions
+          software engineer @ booz allen hamilton
         </p>
       </div>
 
