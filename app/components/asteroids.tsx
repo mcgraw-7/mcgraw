@@ -18,9 +18,10 @@ interface Bullet {
 interface AsteroidsGameProps {
   onScoreChange?: (score: number) => void;
   onGameOver?: () => void;
+  isPlaying?: boolean; // When false, disables collision detection (terminal is open)
 }
 
-const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
+const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: AsteroidsGameProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
@@ -37,6 +38,12 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
   const invincibleRef = useRef(false);
   const invincibleTimerRef = useRef(0);
   const livesRef = useRef(3);
+  const isPlayingRef = useRef(isPlaying);
+  
+  // Keep isPlayingRef in sync with prop
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
   
   const [score, setScore] = useState(0);
   const [highScore, setHighScore] = useState(0);
@@ -54,6 +61,29 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Prevent default touch behaviors on mobile
+  useEffect(() => {
+    if (!isMobile) return;
+    
+    const preventDefaults = (e: TouchEvent) => {
+      // Allow touches on non-game elements
+      const target = e.target as HTMLElement;
+      if (target.closest('a') || target.closest('button:not([data-game-control])')) return;
+      e.preventDefault();
+    };
+    
+    // Prevent pull-to-refresh and other gestures
+    document.body.style.overscrollBehavior = 'none';
+    document.documentElement.style.overscrollBehavior = 'none';
+    document.addEventListener('touchmove', preventDefaults, { passive: false });
+    
+    return () => {
+      document.body.style.overscrollBehavior = '';
+      document.documentElement.style.overscrollBehavior = '';
+      document.removeEventListener('touchmove', preventDefaults);
+    };
+  }, [isMobile]);
 
   // Touch control handlers
   const handleTouchControl = useCallback((action: string, isPressed: boolean) => {
@@ -403,8 +433,8 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
         if (ship.position.y > bounds.y) ship.position.y = -bounds.y;
         if (ship.position.y < -bounds.y) ship.position.y = bounds.y;
 
-        // Check ship collision with asteroids (only if not invincible)
-        if (!invincibleRef.current) {
+        // Check ship collision with asteroids (only if playing and not invincible)
+        if (isPlayingRef.current && !invincibleRef.current) {
           for (const asteroid of asteroidsRef.current) {
             const dist = ship.position.distanceTo(asteroid.mesh.position);
             const shipRadius = 3; // Approximate ship collision radius
@@ -534,10 +564,18 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
       <div 
         ref={containerRef} 
         className="fixed inset-0 z-0 pointer-events-auto"
-        style={{ touchAction: 'none' }}
+        style={{ 
+          touchAction: 'none',
+          WebkitTouchCallout: 'none',
+          WebkitUserSelect: 'none',
+          userSelect: 'none'
+        }}
+        onTouchStart={(e) => e.preventDefault()}
+        onTouchMove={(e) => e.preventDefault()}
       />
       
-      {/* Arcade-style HUD */}
+      {/* Arcade-style HUD - only show when playing */}
+      {isPlaying && (
       <div className="fixed top-4 right-4 z-20 font-mono text-right pointer-events-none">
         {/* Score display - arcade cabinet style */}
         <div className="mb-2">
@@ -591,9 +629,10 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
           </div>
         </div>
       </div>
+      )}
       
-      {/* Instructions - desktop only */}
-      {showInstructions && !gameOver && !isMobile && (
+      {/* Instructions - desktop only, when playing */}
+      {isPlaying && showInstructions && !gameOver && !isMobile && (
         <div className="fixed bottom-4 right-4 z-20 text-right pointer-events-none">
           <div 
             className="text-[8px] text-gray-500 leading-relaxed"
@@ -606,20 +645,24 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
         </div>
       )}
 
-      {/* Mobile Touch Controls */}
-      {isMobile && !gameOver && (
+      {/* Mobile Touch Controls - only show when playing */}
+      {isPlaying && isMobile && !gameOver && (
         <div className="fixed bottom-4 left-4 right-4 z-40 flex justify-between items-end pointer-events-auto">
           {/* Left side - D-pad style rotation + thrust */}
           <div className="flex flex-col items-center gap-2">
             {/* Thrust button */}
             <button
-              className="w-14 h-14 rounded-full bg-black/60 border-2 border-neonGreen flex items-center justify-center active:bg-neonGreen/30"
+              data-game-control
+              className="w-14 h-14 rounded-full bg-black/60 border-2 border-neonGreen flex items-center justify-center active:bg-neonGreen/30 select-none"
               style={{ 
                 boxShadow: '0 0 10px rgba(57, 255, 20, 0.5)',
-                touchAction: 'manipulation'
+                touchAction: 'none',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
               }}
-              onTouchStart={(e) => { e.preventDefault(); handleTouchControl('arrowup', true); }}
-              onTouchEnd={(e) => { e.preventDefault(); handleTouchControl('arrowup', false); }}
+              onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); handleTouchControl('arrowup', true); }}
+              onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleTouchControl('arrowup', false); }}
+              onContextMenu={(e) => e.preventDefault()}
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-neonGreen">
                 <path d="M12 4L20 16H4L12 4Z" fill="currentColor"/>
@@ -628,26 +671,34 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
             {/* Left/Right rotation */}
             <div className="flex gap-2">
               <button
-                className="w-12 h-12 rounded-full bg-black/60 border-2 border-neonGreen flex items-center justify-center active:bg-neonGreen/30"
+                data-game-control
+                className="w-12 h-12 rounded-full bg-black/60 border-2 border-neonGreen flex items-center justify-center active:bg-neonGreen/30 select-none"
                 style={{ 
                   boxShadow: '0 0 10px rgba(57, 255, 20, 0.5)',
-                  touchAction: 'manipulation'
+                  touchAction: 'none',
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none'
                 }}
-                onTouchStart={(e) => { e.preventDefault(); handleTouchControl('arrowleft', true); }}
-                onTouchEnd={(e) => { e.preventDefault(); handleTouchControl('arrowleft', false); }}
+                onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); handleTouchControl('arrowleft', true); }}
+                onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleTouchControl('arrowleft', false); }}
+                onContextMenu={(e) => e.preventDefault()}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-neonGreen">
                   <path d="M15 4L7 12L15 20" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
                 </svg>
               </button>
               <button
-                className="w-12 h-12 rounded-full bg-black/60 border-2 border-neonGreen flex items-center justify-center active:bg-neonGreen/30"
+                data-game-control
+                className="w-12 h-12 rounded-full bg-black/60 border-2 border-neonGreen flex items-center justify-center active:bg-neonGreen/30 select-none"
                 style={{ 
                   boxShadow: '0 0 10px rgba(57, 255, 20, 0.5)',
-                  touchAction: 'manipulation'
+                  touchAction: 'none',
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none'
                 }}
-                onTouchStart={(e) => { e.preventDefault(); handleTouchControl('arrowright', true); }}
-                onTouchEnd={(e) => { e.preventDefault(); handleTouchControl('arrowright', false); }}
+                onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); handleTouchControl('arrowright', true); }}
+                onTouchEnd={(e) => { e.preventDefault(); e.stopPropagation(); handleTouchControl('arrowright', false); }}
+                onContextMenu={(e) => e.preventDefault()}
               >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-neonGreen">
                   <path d="M9 4L17 12L9 20" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
@@ -658,12 +709,16 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
 
           {/* Right side - Fire button */}
           <button
-            className="w-20 h-20 rounded-full bg-black/60 border-3 border-orange-500 flex items-center justify-center active:bg-orange-500/30"
+            data-game-control
+            className="w-20 h-20 rounded-full bg-black/60 border-3 border-orange-500 flex items-center justify-center active:bg-orange-500/30 select-none"
             style={{ 
               boxShadow: '0 0 15px rgba(249, 115, 22, 0.6)',
-              touchAction: 'manipulation'
+              touchAction: 'none',
+              WebkitTouchCallout: 'none',
+              WebkitUserSelect: 'none'
             }}
-            onTouchStart={(e) => { e.preventDefault(); handleFireTouch(); }}
+            onTouchStart={(e) => { e.preventDefault(); e.stopPropagation(); handleFireTouch(); }}
+            onContextMenu={(e) => e.preventDefault()}
           >
             <span 
               className="text-orange-500 text-xs font-bold"
@@ -675,8 +730,8 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
         </div>
       )}
       
-      {/* Game Over overlay */}
-      {gameOver && (
+      {/* Game Over overlay - only show when playing */}
+      {isPlaying && gameOver && (
         <div className="fixed inset-0 z-30 flex items-center justify-center pointer-events-none">
           <div 
             className="text-center p-8 bg-black/80 border-2 border-red-500"

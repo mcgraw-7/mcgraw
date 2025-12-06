@@ -27,8 +27,8 @@ export default function Home() {
 
   return (
     <main className="h-screen bg-black overflow-hidden flex items-center justify-center p-8 relative">
-      {/* Asteroids Game Background */}
-      <AsteroidsGame />
+      {/* Asteroids Game Background - only enable collision when terminal is closed */}
+      <AsteroidsGame isPlaying={!isTerminalOpen} />
       
       {/* CRT Turn-off animation styles */}
       <style jsx>{`
