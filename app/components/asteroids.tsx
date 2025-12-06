@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 
 interface Asteroid {
@@ -15,7 +15,12 @@ interface Bullet {
   life: number;
 }
 
-const AsteroidsGame = () => {
+interface AsteroidsGameProps {
+  onScoreChange?: (score: number) => void;
+  onGameOver?: () => void;
+}
+
+const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const cameraRef = useRef<THREE.OrthographicCamera | null>(null);
@@ -27,6 +32,67 @@ const AsteroidsGame = () => {
   const shipVelocityRef = useRef(new THREE.Vector2(0, 0));
   const shipRotationRef = useRef(0);
   const frameRef = useRef<number>(0);
+  const scoreRef = useRef(0);
+  const isDeadRef = useRef(false);
+  const invincibleRef = useRef(false);
+  const invincibleTimerRef = useRef(0);
+  const livesRef = useRef(3);
+  
+  const [score, setScore] = useState(0);
+  const [highScore, setHighScore] = useState(0);
+  const [lives, setLives] = useState(3);
+  const [gameOver, setGameOver] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(true);
+
+  // Load high score from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('asteroids-highscore');
+    if (saved) {
+      setHighScore(parseInt(saved, 10));
+    }
+  }, []);
+
+  // Save high score when it changes
+  const updateHighScore = useCallback((newScore: number) => {
+    if (newScore > highScore) {
+      setHighScore(newScore);
+      localStorage.setItem('asteroids-highscore', newScore.toString());
+    }
+  }, [highScore]);
+
+  // Reset game
+  const resetGame = useCallback(() => {
+    scoreRef.current = 0;
+    setScore(0);
+    livesRef.current = 3;
+    setLives(3);
+    isDeadRef.current = false;
+    setGameOver(false);
+    invincibleRef.current = true;
+    invincibleTimerRef.current = 120; // 2 seconds of invincibility on start
+    
+    // Reset ship position
+    if (shipRef.current && cameraRef.current) {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      const aspect = width / height;
+      const frustumSize = 100;
+      
+      const terminalWidth = Math.min(896, width - 64);
+      const terminalLeft = (width - terminalWidth) / 2;
+      const terminalRightEdge = ((terminalLeft + terminalWidth) / width) * 2 - 1;
+      const terminalRightWorld = terminalRightEdge * (frustumSize * aspect / 2);
+      const rightEdge = frustumSize * aspect / 2;
+      
+      shipRef.current.position.set(
+        terminalRightWorld + (rightEdge - terminalRightWorld) / 2,
+        0,
+        0
+      );
+      shipRef.current.visible = true;
+      shipVelocityRef.current.set(0, 0);
+    }
+  }, []);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -78,35 +144,24 @@ const AsteroidsGame = () => {
     ship.scale.set(2, 2, 2);
     
     // Position ship to point at the red dot in terminal header
-    // Terminal is CENTERED with max-w-4xl (896px), p-8 (32px) padding around viewport
-    // Red dot is at px-4 (16px) from left of terminal + ~6px for dot center
-    
-    // Calculate terminal position (centered)
-    const terminalWidth = Math.min(896, width - 64); // max-w-4xl or viewport - padding
+    const terminalWidth = Math.min(896, width - 64);
     const terminalLeft = (width - terminalWidth) / 2;
+    const redDotScreenX = terminalLeft + 16 + 6;
+    const redDotScreenY = 32 + 12 + 6;
     
-    // Red dot position in screen coordinates
-    const redDotScreenX = terminalLeft + 16 + 6; // terminal left + px-4 + half dot
-    const redDotScreenY = 32 + 12 + 6; // p-8 + py-3 + half dot height from top
-    
-    // Convert to normalized device coords then to world
     const ndcX = (redDotScreenX / width) * 2 - 1;
     const ndcY = -(redDotScreenY / height) * 2 + 1;
     
-    // Convert to world coordinates
     const redDotWorldX = ndcX * (frustumSize * aspect / 2);
     const redDotWorldY = ndcY * (frustumSize / 2);
     
-    // Position ship to the right side of screen (outside terminal)
-    // Terminal ends at roughly center + half terminal width
     const terminalRightEdge = ((terminalLeft + terminalWidth) / width) * 2 - 1;
     const terminalRightWorld = terminalRightEdge * (frustumSize * aspect / 2);
     
     const rightEdge = frustumSize * aspect / 2;
-    const shipStartX = terminalRightWorld + (rightEdge - terminalRightWorld) / 2; // Middle of right empty space
-    const shipStartY = redDotWorldY; // Same height as the red dot
+    const shipStartX = terminalRightWorld + (rightEdge - terminalRightWorld) / 2;
+    const shipStartY = redDotWorldY;
     
-    // Calculate angle to point at red dot
     const angleToRedDot = Math.atan2(redDotWorldY - shipStartY, redDotWorldX - shipStartX);
     
     ship.position.set(shipStartX, shipStartY, 0);
@@ -115,6 +170,10 @@ const AsteroidsGame = () => {
     
     scene.add(ship);
     shipRef.current = ship;
+
+    // Start with invincibility
+    invincibleRef.current = true;
+    invincibleTimerRef.current = 120;
 
     // Create asteroids
     const createAsteroidGeometry = (size: number) => {
@@ -140,30 +199,29 @@ const AsteroidsGame = () => {
       const asteroidSize = size || 3 + Math.random() * 4;
       const geometry = createAsteroidGeometry(asteroidSize);
       const material = new THREE.LineBasicMaterial({ 
-        color: 0xFF6600, // orange
+        color: 0xFF6600,
         opacity: 0.7,
         transparent: true
       });
       const asteroid = new THREE.LineLoop(geometry, material);
       
-      // Random position at screen edges if not specified
       if (x === undefined || y === undefined) {
         const edge = Math.floor(Math.random() * 4);
         const bounds = frustumSize * aspect / 2;
         switch (edge) {
-          case 0: // top
+          case 0:
             x = (Math.random() - 0.5) * bounds * 2;
             y = frustumSize / 2 + asteroidSize;
             break;
-          case 1: // right
+          case 1:
             x = bounds + asteroidSize;
             y = (Math.random() - 0.5) * frustumSize;
             break;
-          case 2: // bottom
+          case 2:
             x = (Math.random() - 0.5) * bounds * 2;
             y = -frustumSize / 2 - asteroidSize;
             break;
-          default: // left
+          default:
             x = -bounds - asteroidSize;
             y = (Math.random() - 0.5) * frustumSize;
         }
@@ -191,9 +249,14 @@ const AsteroidsGame = () => {
     // Keyboard handlers
     const handleKeyDown = (e: KeyboardEvent) => {
       keysRef.current.add(e.key.toLowerCase());
+      
+      // Hide instructions on first input
+      setShowInstructions(false);
+      
       if (e.key === ' ') {
         e.preventDefault();
-        // Fire bullet
+        if (isDeadRef.current) return;
+        
         if (shipRef.current && bulletsRef.current.length < 5) {
           const bulletGeometry = new THREE.CircleGeometry(0.5, 8);
           const bulletMaterial = new THREE.MeshBasicMaterial({ color: 0x39FF14 });
@@ -214,6 +277,11 @@ const AsteroidsGame = () => {
             life: 60
           });
         }
+      }
+      
+      // Restart on R key when game over
+      if (e.key.toLowerCase() === 'r' && isDeadRef.current) {
+        resetGame();
       }
     };
 
@@ -249,56 +317,99 @@ const AsteroidsGame = () => {
       const camera = cameraRef.current;
       if (!ship || !camera) return;
 
-      // Ship controls
-      const keys = keysRef.current;
-      const rotationSpeed = 0.05;
-      const thrust = 0.015;
-      const friction = 0.995;
-      const maxSpeed = 0.8;
-
-      if (keys.has('arrowleft') || keys.has('a')) {
-        shipRotationRef.current += rotationSpeed;
-      }
-      if (keys.has('arrowright') || keys.has('d')) {
-        shipRotationRef.current -= rotationSpeed;
-      }
-      if (keys.has('arrowup') || keys.has('w')) {
-        shipVelocityRef.current.x += Math.cos(shipRotationRef.current) * thrust;
-        shipVelocityRef.current.y += Math.sin(shipRotationRef.current) * thrust;
+      // Handle invincibility timer
+      if (invincibleRef.current) {
+        invincibleTimerRef.current--;
+        // Blink ship during invincibility
+        ship.visible = Math.floor(invincibleTimerRef.current / 5) % 2 === 0;
+        if (invincibleTimerRef.current <= 0) {
+          invincibleRef.current = false;
+          ship.visible = true;
+        }
       }
 
-      // Clamp velocity
-      const speed = shipVelocityRef.current.length();
-      if (speed > maxSpeed) {
-        shipVelocityRef.current.multiplyScalar(maxSpeed / speed);
+      // Skip controls if dead
+      if (!isDeadRef.current) {
+        const keys = keysRef.current;
+        const rotationSpeed = 0.05;
+        const thrust = 0.015;
+        const friction = 0.995;
+        const maxSpeed = 0.8;
+
+        if (keys.has('arrowleft') || keys.has('a')) {
+          shipRotationRef.current += rotationSpeed;
+        }
+        if (keys.has('arrowright') || keys.has('d')) {
+          shipRotationRef.current -= rotationSpeed;
+        }
+        if (keys.has('arrowup') || keys.has('w')) {
+          shipVelocityRef.current.x += Math.cos(shipRotationRef.current) * thrust;
+          shipVelocityRef.current.y += Math.sin(shipRotationRef.current) * thrust;
+        }
+
+        const speed = shipVelocityRef.current.length();
+        if (speed > maxSpeed) {
+          shipVelocityRef.current.multiplyScalar(maxSpeed / speed);
+        }
+
+        shipVelocityRef.current.multiplyScalar(friction);
+
+        ship.position.x += shipVelocityRef.current.x;
+        ship.position.y += shipVelocityRef.current.y;
+        ship.rotation.z = shipRotationRef.current;
+
+        const bounds = {
+          x: (camera.right || 50) + 5,
+          y: (camera.top || 50) + 5
+        };
+
+        if (ship.position.x > bounds.x) ship.position.x = -bounds.x;
+        if (ship.position.x < -bounds.x) ship.position.x = bounds.x;
+        if (ship.position.y > bounds.y) ship.position.y = -bounds.y;
+        if (ship.position.y < -bounds.y) ship.position.y = bounds.y;
+
+        // Check ship collision with asteroids (only if not invincible)
+        if (!invincibleRef.current) {
+          for (const asteroid of asteroidsRef.current) {
+            const dist = ship.position.distanceTo(asteroid.mesh.position);
+            const shipRadius = 3; // Approximate ship collision radius
+            
+            if (dist < asteroid.size + shipRadius) {
+              // Ship hit!
+              livesRef.current--;
+              setLives(livesRef.current);
+              
+              if (livesRef.current <= 0) {
+                // Game over
+                isDeadRef.current = true;
+                setGameOver(true);
+                ship.visible = false;
+                updateHighScore(scoreRef.current);
+                onGameOver?.();
+              } else {
+                // Respawn with invincibility
+                invincibleRef.current = true;
+                invincibleTimerRef.current = 120;
+                ship.position.set(shipStartX, shipStartY, 0);
+                shipVelocityRef.current.set(0, 0);
+              }
+              break;
+            }
+          }
+        }
       }
 
-      // Apply friction
-      shipVelocityRef.current.multiplyScalar(friction);
-
-      // Update ship position and rotation
-      ship.position.x += shipVelocityRef.current.x;
-      ship.position.y += shipVelocityRef.current.y;
-      ship.rotation.z = shipRotationRef.current;
-
-      // Screen wrapping for ship
+      // Update asteroids
       const bounds = {
         x: (camera.right || 50) + 5,
         y: (camera.top || 50) + 5
       };
-
-      if (ship.position.x > bounds.x) ship.position.x = -bounds.x;
-      if (ship.position.x < -bounds.x) ship.position.x = bounds.x;
-      if (ship.position.y > bounds.y) ship.position.y = -bounds.y;
-      if (ship.position.y < -bounds.y) ship.position.y = bounds.y;
-
-      // Update asteroids
+      
       asteroidsRef.current.forEach((asteroid) => {
         asteroid.mesh.position.x += asteroid.velocity.x;
         asteroid.mesh.position.y += asteroid.velocity.y;
         asteroid.mesh.rotation.z += asteroid.rotationSpeed;
 
-        // Screen wrapping
         const asteroidBounds = bounds.x + asteroid.size;
         if (asteroid.mesh.position.x > asteroidBounds) asteroid.mesh.position.x = -asteroidBounds;
         if (asteroid.mesh.position.x < -asteroidBounds) asteroid.mesh.position.x = asteroidBounds;
@@ -312,17 +423,20 @@ const AsteroidsGame = () => {
         bullet.mesh.position.y += bullet.velocity.y;
         bullet.life--;
 
-        // Check collision with asteroids
         for (let i = asteroidsRef.current.length - 1; i >= 0; i--) {
           const asteroid = asteroidsRef.current[i];
           const dist = bullet.mesh.position.distanceTo(asteroid.mesh.position);
           
           if (dist < asteroid.size) {
-            // Remove asteroid
             scene.remove(asteroid.mesh);
             asteroidsRef.current.splice(i, 1);
             
-            // Spawn smaller asteroids if big enough
+            // Add score based on asteroid size
+            const points = asteroid.size > 4 ? 20 : asteroid.size > 2 ? 50 : 100;
+            scoreRef.current += points;
+            setScore(scoreRef.current);
+            onScoreChange?.(scoreRef.current);
+            
             if (asteroid.size > 2) {
               for (let j = 0; j < 2; j++) {
                 const newSize = asteroid.size * 0.5;
@@ -336,7 +450,6 @@ const AsteroidsGame = () => {
               }
             }
             
-            // Remove bullet
             scene.remove(bullet.mesh);
             return false;
           }
@@ -351,7 +464,6 @@ const AsteroidsGame = () => {
         return true;
       });
 
-      // Spawn new asteroids periodically if too few
       if (asteroidsRef.current.length < 5 && Math.random() < 0.01) {
         spawnAsteroid();
       }
@@ -361,7 +473,6 @@ const AsteroidsGame = () => {
 
     animate();
 
-    // Cleanup
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
@@ -374,14 +485,127 @@ const AsteroidsGame = () => {
       
       rendererRef.current?.dispose();
     };
-  }, []);
+  }, [onScoreChange, onGameOver, resetGame, updateHighScore]);
 
   return (
-    <div 
-      ref={containerRef} 
-      className="fixed inset-0 z-0 pointer-events-auto"
-      style={{ touchAction: 'none' }}
-    />
+    <>
+      <div 
+        ref={containerRef} 
+        className="fixed inset-0 z-0 pointer-events-auto"
+        style={{ touchAction: 'none' }}
+      />
+      
+      {/* Arcade-style HUD */}
+      <div className="fixed top-4 right-4 z-20 font-mono text-right pointer-events-none">
+        {/* Score display - arcade cabinet style */}
+        <div className="mb-2">
+          <div className="text-[10px] text-gray-500 tracking-widest">SCORE</div>
+          <div 
+            className="text-2xl text-neonGreen tracking-wider"
+            style={{ 
+              fontFamily: '"Press Start 2P", "Courier New", monospace',
+              textShadow: '0 0 10px rgba(57, 255, 20, 0.8), 0 0 20px rgba(57, 255, 20, 0.4)'
+            }}
+          >
+            {score.toString().padStart(6, '0')}
+          </div>
+        </div>
+        
+        {/* High score */}
+        <div className="mb-4">
+          <div className="text-[10px] text-gray-500 tracking-widest">HI-SCORE</div>
+          <div 
+            className="text-lg text-orange-500 tracking-wider"
+            style={{ 
+              fontFamily: '"Press Start 2P", "Courier New", monospace',
+              textShadow: '0 0 10px rgba(249, 115, 22, 0.8), 0 0 20px rgba(249, 115, 22, 0.4)'
+            }}
+          >
+            {highScore.toString().padStart(6, '0')}
+          </div>
+        </div>
+        
+        {/* Lives */}
+        <div>
+          <div className="text-[10px] text-gray-500 tracking-widest mb-1">LIVES</div>
+          <div className="flex justify-end gap-1">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <svg
+                key={i}
+                width="16"
+                height="16"
+                viewBox="0 0 20 20"
+                className={`${i < lives ? 'text-neonGreen' : 'text-gray-700'}`}
+                style={{ 
+                  filter: i < lives ? 'drop-shadow(0 0 4px rgba(57, 255, 20, 0.8))' : 'none'
+                }}
+              >
+                <polygon
+                  points="15,10 5,15 7,10 5,5"
+                  fill="currentColor"
+                />
+              </svg>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      {/* Instructions */}
+      {showInstructions && !gameOver && (
+        <div className="fixed bottom-4 right-4 z-20 text-right pointer-events-none">
+          <div 
+            className="text-[8px] text-gray-500 leading-relaxed"
+            style={{ fontFamily: '"Press Start 2P", "Courier New", monospace' }}
+          >
+            <div>← → ROTATE</div>
+            <div>↑ THRUST</div>
+            <div>SPACE FIRE</div>
+          </div>
+        </div>
+      )}
+      
+      {/* Game Over overlay */}
+      {gameOver && (
+        <div className="fixed inset-0 z-30 flex items-center justify-center pointer-events-none">
+          <div 
+            className="text-center p-8 bg-black/80 border-2 border-red-500"
+            style={{ 
+              boxShadow: '0 0 30px rgba(239, 68, 68, 0.5), inset 0 0 30px rgba(239, 68, 68, 0.1)'
+            }}
+          >
+            <div 
+              className="text-3xl text-red-500 mb-4"
+              style={{ 
+                fontFamily: '"Press Start 2P", "Courier New", monospace',
+                textShadow: '0 0 20px rgba(239, 68, 68, 0.8)'
+              }}
+            >
+              GAME OVER
+            </div>
+            <div 
+              className="text-lg text-neonGreen mb-2"
+              style={{ fontFamily: '"Press Start 2P", "Courier New", monospace' }}
+            >
+              SCORE: {score.toString().padStart(6, '0')}
+            </div>
+            {score >= highScore && score > 0 && (
+              <div 
+                className="text-sm text-orange-500 mb-4 animate-pulse"
+                style={{ fontFamily: '"Press Start 2P", "Courier New", monospace' }}
+              >
+                NEW HIGH SCORE!
+              </div>
+            )}
+            <div 
+              className="text-xs text-gray-400 pointer-events-auto"
+              style={{ fontFamily: '"Press Start 2P", "Courier New", monospace' }}
+            >
+              PRESS R TO RESTART
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
