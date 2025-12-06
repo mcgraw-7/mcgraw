@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 
 export default function Home() {
   return (
@@ -108,7 +109,7 @@ export default function Home() {
 
         {/* Quick Links Grid */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl lowercase">
-          <a 
+          <Link 
             href="/work"
             className="group relative cursor-pointer"
           >
@@ -124,9 +125,9 @@ export default function Home() {
                 <span className="text-orange-500 text-lg group-hover:translate-x-1 transition-transform duration-300">→</span>
               </div>
             </div>
-          </a>
+          </Link>
 
-          <a 
+          <Link 
             href="/more"
             className="group relative cursor-pointer"
           >
@@ -142,7 +143,7 @@ export default function Home() {
                 <span className="text-orange-500 text-lg group-hover:translate-x-1 transition-transform duration-300">→</span>
               </div>
             </div>
-          </a>
+          </Link>
         </div>
       </div>
 
