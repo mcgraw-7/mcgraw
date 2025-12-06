@@ -62,14 +62,24 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Prevent default touch behaviors on mobile
+  // Prevent default touch behaviors on mobile (only when playing)
   useEffect(() => {
-    if (!isMobile) return;
+    if (!isMobile || !isPlaying) return;
     
     const preventDefaults = (e: TouchEvent) => {
-      // Allow touches on non-game elements
+      // Allow touches on scrollable elements, links, and non-game buttons
       const target = e.target as HTMLElement;
-      if (target.closest('a') || target.closest('button:not([data-game-control])')) return;
+      // Allow scrolling in terminal, any scrollable container, links, and regular buttons
+      if (
+        target.closest('[data-scrollable]') ||
+        target.closest('.overflow-y-auto') ||
+        target.closest('.overflow-auto') ||
+        target.closest('.overflow-scroll') ||
+        target.closest('a') ||
+        target.closest('button:not([data-game-control])')
+      ) {
+        return;
+      }
       e.preventDefault();
     };
     
@@ -83,7 +93,7 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
       document.documentElement.style.overscrollBehavior = '';
       document.removeEventListener('touchmove', preventDefaults);
     };
-  }, [isMobile]);
+  }, [isMobile, isPlaying]);
 
   // Touch control handlers
   const handleTouchControl = useCallback((action: string, isPressed: boolean) => {
@@ -563,15 +573,15 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
     <>
       <div 
         ref={containerRef} 
-        className="fixed inset-0 z-0 pointer-events-auto"
+        className={`fixed inset-0 z-0 ${isPlaying ? 'pointer-events-auto' : 'pointer-events-none'}`}
         style={{ 
-          touchAction: 'none',
+          touchAction: isPlaying ? 'none' : 'auto',
           WebkitTouchCallout: 'none',
           WebkitUserSelect: 'none',
           userSelect: 'none'
         }}
-        onTouchStart={(e) => e.preventDefault()}
-        onTouchMove={(e) => e.preventDefault()}
+        onTouchStart={isPlaying ? (e) => e.preventDefault() : undefined}
+        onTouchMove={isPlaying ? (e) => e.preventDefault() : undefined}
       />
       
       {/* Arcade-style HUD - only show when playing */}
