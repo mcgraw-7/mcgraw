@@ -43,23 +43,33 @@ export default function Home() {
             </p>
           </div>
 
+          {/* Section 2: Side Projects Header */}
+          <div className="text-green-400 mb-2 text-sm">
+            <span className="text-orange-500">$</span> cat ~/side-projects/README.txt
+          </div>
+          <div className="pl-4 border-l-2 border-orange-500/30 mb-4">
+            <p className="text-gray-400 text-sm italic">
+              Independent initiatives developed on personal time to solve real problems encountered at work.
+            </p>
+          </div>
+
           {/* Section 2: aiPat */}
           <div className="text-green-400 mb-2 text-sm">
-            <span className="text-orange-500">$</span> cat ~/projects/aiPAT.txt
+            <span className="text-orange-500">$</span> cat ~/side-projects/aiPAT.txt
           </div>
           <div className="pl-4 border-l-2 border-neonGreen/30 mb-8">
             <p className="text-gray-300 leading-relaxed">
-              <span className="text-orange-500 font-semibold">AI Powered Accessibility Tool</span> — Machine learning system for detecting WCAG heading structure violations. Built with <span className="text-white">Python</span>, <span className="text-white">FastAPI</span>, <span className="text-white">scikit-learn</span>, and <span className="text-white">BeautifulSoup</span>. Extracts 24+ DOM features to identify missing h1 tags, invalid hierarchy, empty headings, and non-semantic usage with {'>'}90% accuracy target. Designed for CI/CD integration, VS Code extensions, and browser-based analysis.
+              <span className="text-orange-500 font-semibold">AI Powered Accessibility Tool</span> <span className="text-gray-500 text-xs">[solo project]</span> — Machine learning system for detecting WCAG heading structure violations. Built with <span className="text-white">Python</span>, <span className="text-white">FastAPI</span>, <span className="text-white">scikit-learn</span>, and <span className="text-white">BeautifulSoup</span>. Extracts 24+ DOM features to identify missing h1 tags, invalid hierarchy, empty headings, and non-semantic usage with {'>'}90% accuracy target. Designed for CI/CD integration, VS Code extensions, and browser-based analysis.
             </p>
           </div>
 
           {/* Section 3: Core Cracker */}
           <div className="text-green-400 mb-2 text-sm">
-            <span className="text-orange-500">$</span> cat ~/projects/core-cracker.txt
+            <span className="text-orange-500">$</span> cat ~/side-projects/core-cracker.txt
           </div>
           <div className="pl-4 border-l-2 border-neonGreen/30 mb-8">
             <p className="text-gray-300 leading-relaxed">
-              <span className="text-orange-500 font-semibold">Core Cracker</span> — Local development environment validation toolkit for VA enterprise applications on macOS ARM64. Automates verification of <span className="text-white">Zulu JDK 8</span>, <span className="text-white">WebLogic 12.2.1.4</span>, <span className="text-white">Maven</span>, and <span className="text-white">Docker/Colima</span> configurations. Includes auto-fix tools, properties backup/restore, and health diagnostics that map directly to the official VBMS Core deployment guide.
+              <span className="text-orange-500 font-semibold">Core Cracker</span> <span className="text-gray-500 text-xs">[solo project]</span> — Local development environment validation toolkit for VA enterprise applications on macOS ARM64. Automates verification of <span className="text-white">Zulu JDK 8</span>, <span className="text-white">WebLogic 12.2.1.4</span>, <span className="text-white">Maven</span>, and <span className="text-white">Docker/Colima</span> configurations. Includes auto-fix tools, properties backup/restore, and health diagnostics that map directly to the official VBMS Core deployment guide.
             </p>
           </div>
 
