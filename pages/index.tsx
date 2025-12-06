@@ -1,11 +1,20 @@
 'use client';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+
+// Dynamic import to avoid SSR issues with Three.js
+const AsteroidsGame = dynamic(() => import('../app/components/asteroids'), {
+  ssr: false,
+});
 
 export default function Home() {
   return (
-    <main className="h-screen bg-black overflow-hidden flex items-center p-8">
+    <main className="h-screen bg-black overflow-hidden flex items-center p-8 relative">
+      {/* Asteroids Game Background */}
+      <AsteroidsGame />
+      
       {/* Main Terminal Interface */}
-      <div className="relative bg-gray-900 border-2 border-gray-700 max-w-4xl w-full h-[calc(100vh-64px)] transition-all duration-300 hover:border-orange-500 flex flex-col">
+      <div className="relative bg-gray-900 border-2 border-gray-700 max-w-4xl w-full h-[calc(100vh-64px)] transition-all duration-300 hover:border-orange-500 flex flex-col z-10">
         {/* Accent bars */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-orange-500 to-transparent"></div>
         <div className="absolute bottom-0 left-0 w-1 h-full bg-gradient-to-b from-neonGreen via-neonGreen to-transparent opacity-30"></div>
