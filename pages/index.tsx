@@ -43,21 +43,21 @@ export default function Home() {
 
             {/* Section 2: aiPat */}
             <div className="text-green-400 mb-2 text-sm">
-              <span className="text-orange-500">$</span> cat ~/booz-allen/projects/aiPat.txt
+              <span className="text-orange-500">$</span> cat ~/projects/aiPAT.txt
             </div>
             <div className="pl-4 border-l-2 border-neonGreen/30 mb-8">
               <p className="text-gray-300 leading-relaxed">
-                Internal Booz Allen initiative leveraging AI to streamline patent research and analysis. Contributed to development of intelligent search and classification features.
+                <span className="text-orange-500 font-semibold">AI Powered Accessibility Tool</span> — Machine learning system for detecting WCAG heading structure violations. Built with <span className="text-white">Python</span>, <span className="text-white">FastAPI</span>, <span className="text-white">scikit-learn</span>, and <span className="text-white">BeautifulSoup</span>. Extracts 24+ DOM features to identify missing h1 tags, invalid hierarchy, empty headings, and non-semantic usage with {'>'}90% accuracy target. Designed for CI/CD integration, VS Code extensions, and browser-based analysis.
               </p>
             </div>
 
             {/* Section 3: Core Cracker */}
             <div className="text-green-400 mb-2 text-sm">
-              <span className="text-orange-500">$</span> cat ~/booz-allen/projects/core-cracker.txt
+              <span className="text-orange-500">$</span> cat ~/projects/core-cracker.txt
             </div>
             <div className="pl-4 border-l-2 border-neonGreen/30 mb-8">
               <p className="text-gray-300 leading-relaxed">
-                Developer tooling project focused on improving internal workflows and automation. Built utilities to accelerate common development tasks across teams.
+                <span className="text-orange-500 font-semibold">Core Cracker</span> — Local development environment validation toolkit for VA enterprise applications on macOS ARM64. Automates verification of <span className="text-white">Zulu JDK 8</span>, <span className="text-white">WebLogic 12.2.1.4</span>, <span className="text-white">Maven</span>, and <span className="text-white">Docker/Colima</span> configurations. Includes auto-fix tools, properties backup/restore, and health diagnostics that map directly to the official VBMS Core deployment guide.
               </p>
             </div>
 
