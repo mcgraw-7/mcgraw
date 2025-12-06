@@ -78,10 +78,15 @@ const AsteroidsGame = () => {
     ship.scale.set(2, 2, 2);
     
     // Position ship to point at the red dot in terminal header
-    // Terminal is left-aligned with p-8 (32px) padding, max-w-4xl (896px)
-    // Red dot is at approximately px-4 (16px) from left of terminal + 6px for dot center
-    // Convert screen coords to Three.js world coords
-    const redDotScreenX = 32 + 16 + 6; // ~54px from left edge
+    // Terminal is CENTERED with max-w-4xl (896px), p-8 (32px) padding around viewport
+    // Red dot is at px-4 (16px) from left of terminal + ~6px for dot center
+    
+    // Calculate terminal position (centered)
+    const terminalWidth = Math.min(896, width - 64); // max-w-4xl or viewport - padding
+    const terminalLeft = (width - terminalWidth) / 2;
+    
+    // Red dot position in screen coordinates
+    const redDotScreenX = terminalLeft + 16 + 6; // terminal left + px-4 + half dot
     const redDotScreenY = 32 + 12 + 6; // p-8 + py-3 + half dot height from top
     
     // Convert to normalized device coords then to world
@@ -92,9 +97,14 @@ const AsteroidsGame = () => {
     const redDotWorldX = ndcX * (frustumSize * aspect / 2);
     const redDotWorldY = ndcY * (frustumSize / 2);
     
-    // Position ship to the right of center, pointing left toward the red dot
-    const shipStartX = 20; // Right side of screen
-    const shipStartY = 0;  // Vertically centered
+    // Position ship to the right side of screen (outside terminal)
+    // Terminal ends at roughly center + half terminal width
+    const terminalRightEdge = ((terminalLeft + terminalWidth) / width) * 2 - 1;
+    const terminalRightWorld = terminalRightEdge * (frustumSize * aspect / 2);
+    
+    const rightEdge = frustumSize * aspect / 2;
+    const shipStartX = terminalRightWorld + (rightEdge - terminalRightWorld) / 2; // Middle of right empty space
+    const shipStartY = redDotWorldY; // Same height as the red dot
     
     // Calculate angle to point at red dot
     const angleToRedDot = Math.atan2(redDotWorldY - shipStartY, redDotWorldX - shipStartX);
