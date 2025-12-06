@@ -42,7 +42,8 @@ const TriviaGame: React.FC = () => {
       let i = 0;
       const timer = setInterval(() => {
         if (i < text.length) {
-          setTypedText(prev => prev + text.charAt(i));
+          const char = text.charAt(i);
+          setTypedText(prev => prev + char);
           i++;
         } else {
           setIsTyping(false);
