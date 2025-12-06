@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export default function Home() {
   return (
-    <main className="h-screen bg-black overflow-hidden flex items-center justify-center p-8">
+    <main className="h-screen bg-black overflow-hidden flex items-center p-8">
       {/* Main Terminal Interface */}
       <div className="relative bg-gray-900 border-2 border-gray-700 max-w-4xl w-full h-[calc(100vh-64px)] transition-all duration-300 hover:border-orange-500 flex flex-col">
         {/* Accent bars */}
@@ -100,7 +100,7 @@ export default function Home() {
                 <span className="text-neonGreen">→</span> work/
               </Link>
               <Link href="/more" className="text-gray-300 hover:text-orange-500 transition-colors">
-                <span className="text-neonGreen">→</span> trivia/
+                <span className="text-neonGreen">→</span> more/
               </Link>
               <a 
                 href="https://github.com/mmcgraw73" 

@@ -117,7 +117,7 @@ const TriviaGame: React.FC = () => {
           </h1>
         </div>
         <div className="p-8">
-          <div className="relative bg-gray-900 border-2 border-gray-700 p-8 max-w-4xl mx-auto">
+          <div className="relative bg-gray-900 border-2 border-gray-700 p-8 max-w-4xl">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-orange-500 to-transparent"></div>
             <div className="font-mono text-green-400">
               <span className="text-orange-500">$</span> initializing trivia database...
@@ -144,7 +144,7 @@ const TriviaGame: React.FC = () => {
         </div>
         
         <div className="p-8">
-          <div className="relative bg-gray-900 border-2 border-gray-700 p-8 max-w-4xl mx-auto">
+          <div className="relative bg-gray-900 border-2 border-gray-700 p-8 max-w-4xl">
             <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-orange-500 to-transparent"></div>
             <div className="absolute bottom-0 left-0 w-1 h-full bg-gradient-to-b from-neonGreen via-neonGreen to-transparent opacity-30"></div>
             
@@ -224,7 +224,7 @@ const TriviaGame: React.FC = () => {
 
       {/* Main Terminal Interface */}
       <div className="p-8">
-        <div className="relative bg-gray-900 border-2 border-gray-700 max-w-4xl mx-auto transition-all duration-300 hover:border-orange-500">
+        <div className="relative bg-gray-900 border-2 border-gray-700 max-w-4xl transition-all duration-300 hover:border-orange-500">
           {/* Accent bars */}
           <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-orange-500 to-transparent"></div>
           <div className="absolute bottom-0 left-0 w-1 h-full bg-gradient-to-b from-neonGreen via-neonGreen to-transparent opacity-30"></div>
