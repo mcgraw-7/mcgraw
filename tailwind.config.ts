@@ -8,8 +8,14 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        neonGreen: 'rgba(57, 255, 20, 1)',
+      },
       borderColor: {
         neonGreen: 'rgba(57, 255, 20, 0.3)',
+      },
+      textColor: {
+        neonGreen: 'rgba(57, 255, 20, 1)',
       },
       fontFamily: {
         galaga: ['emulogic', 'sans-serif'],
