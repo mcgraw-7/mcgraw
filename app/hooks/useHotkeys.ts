@@ -1,44 +1,24 @@
-import App from 'next/app';
-import type { AppProps, AppContext } from 'next/app';
-import Nav from '../app/components/nav';
-import HotkeyHelp from '../app/components/HotkeyHelp';
-import { Analytics } from "@vercel/analytics/react";
-import '@fortawesome/fontawesome-free/css/all.min.css'; // Import Font Awesome CSS
-import '../public/fonts/fontawesome-pro/css/all.min.css'; // Import Font Awesome Pro CSS
-import '../app/globals.css';
+import { useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
-import { useState, useEffect, useCallback } from 'react';
 
 // Page order for cycling
 const PAGES = ['/', '/work', '/more'];
 
-function MyApp({ Component, pageProps }: AppProps) {
-  const router = useRouter();
-  const isHomePage = router.pathname === '/';
-  const [showHelp, setShowHelp] = useState(false);
+export interface HotkeyConfig {
+  onToggleTerminal?: () => void;
+  onToggleHelp?: () => void;
+}
 
-  // Global hotkey handler
+export function useHotkeys(config: HotkeyConfig = {}) {
+  const router = useRouter();
+
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const modifier = isMac ? e.metaKey : e.ctrlKey;
 
     // Don't trigger hotkeys when typing in input fields
     const target = e.target as HTMLElement;
     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-      return;
-    }
-
-    // ? or ⌘/Ctrl + / : Toggle help overlay
-    if (e.key === '?' || (modifier && e.key === '/')) {
-      e.preventDefault();
-      setShowHelp(prev => !prev);
-      return;
-    }
-
-    // Escape : Close help overlay
-    if (e.key === 'Escape' && showHelp) {
-      e.preventDefault();
-      setShowHelp(false);
       return;
     }
 
@@ -74,26 +54,46 @@ function MyApp({ Component, pageProps }: AppProps) {
       router.push('/');
       return;
     }
-  }, [router, showHelp]);
+
+    // ⌘/Ctrl + K : Close/clear terminal (page-specific)
+    if (modifier && e.key.toLowerCase() === 'k') {
+      e.preventDefault();
+      config.onToggleTerminal?.();
+      return;
+    }
+
+    // ⌘/Ctrl + T : Open terminal (page-specific)
+    if (modifier && e.key.toLowerCase() === 't') {
+      e.preventDefault();
+      config.onToggleTerminal?.();
+      return;
+    }
+
+    // ? or ⌘/Ctrl + / : Toggle help overlay
+    if (e.key === '?' || (modifier && e.key === '/')) {
+      e.preventDefault();
+      config.onToggleHelp?.();
+      return;
+    }
+
+    // Escape : Close help overlay or terminal
+    if (e.key === 'Escape') {
+      config.onToggleHelp?.();
+      return;
+    }
+  }, [router, config]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
-
-  return (
-    <div>
-      {!isHomePage && <Nav />}
-      <Component {...pageProps} />
-      <HotkeyHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
-      <Analytics />
-    </div>
-  );
 }
 
-MyApp.getInitialProps = async (appContext: AppContext) => {
-  const appProps = await App.getInitialProps(appContext);
-  return { ...appProps };
-};
-
-export default MyApp;
+// Helper to get modifier key symbol based on platform
+export function getModifierKey(): string {
+  if (typeof navigator !== 'undefined') {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    return isMac ? '⌘' : 'Ctrl';
+  }
+  return '⌘';
+}

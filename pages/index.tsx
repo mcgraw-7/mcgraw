@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
@@ -12,18 +12,51 @@ export default function Home() {
   const [isTerminalOpen, setIsTerminalOpen] = useState(true);
   const [isClosing, setIsClosing] = useState(false);
 
-  const handleCloseTerminal = () => {
+  const handleCloseTerminal = useCallback(() => {
+    if (!isTerminalOpen || isClosing) return;
     setIsClosing(true);
     // After animation completes, hide terminal
     setTimeout(() => {
       setIsTerminalOpen(false);
       setIsClosing(false);
     }, 400);
-  };
+  }, [isTerminalOpen, isClosing]);
 
-  const handleOpenTerminal = () => {
+  const handleOpenTerminal = useCallback(() => {
+    if (isTerminalOpen) return;
     setIsTerminalOpen(true);
-  };
+  }, [isTerminalOpen]);
+
+  // Handle ⌘+K (close) and ⌘+T (open) terminal hotkeys
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+      // Don't trigger when typing in input fields
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
+      // ⌘/Ctrl + K : Close terminal
+      if (modifier && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        handleCloseTerminal();
+        return;
+      }
+
+      // ⌘/Ctrl + T : Open terminal
+      if (modifier && e.key.toLowerCase() === 't') {
+        e.preventDefault();
+        handleOpenTerminal();
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleCloseTerminal, handleOpenTerminal]);
 
   return (
     <main className="h-screen bg-black overflow-hidden flex items-center justify-center p-8 relative">
@@ -248,7 +281,12 @@ export default function Home() {
           <span className="text-gray-600 text-xs font-mono">
             <span className="text-green-400">●</span> online
           </span>
-          <span className="text-gray-600 text-xs font-mono">v1.0.0</span>
+          <span className="text-gray-600 text-xs font-mono flex items-center gap-4">
+            <span className="hidden sm:inline text-gray-700 hover:text-gray-500 transition-colors cursor-help" title="Press ? for all hotkeys">
+              press <kbd className="px-1 bg-gray-800 border border-gray-700 rounded text-[10px]">?</kbd> for help
+            </span>
+            <span>v1.0.0</span>
+          </span>
         </div>
       </div>
       )}
