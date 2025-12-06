@@ -43,6 +43,27 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
   const [lives, setLives] = useState(3);
   const [gameOver, setGameOver] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768 || 'ontouchstart' in window);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  // Touch control handlers
+  const handleTouchControl = useCallback((action: string, isPressed: boolean) => {
+    setShowInstructions(false);
+    if (isPressed) {
+      keysRef.current.add(action);
+    } else {
+      keysRef.current.delete(action);
+    }
+  }, []);
 
   // Load high score from localStorage
   useEffect(() => {
@@ -246,6 +267,31 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
       spawnAsteroid();
     }
 
+    // Fire bullet function (used by both keyboard and touch)
+    const fireBullet = () => {
+      if (isDeadRef.current) return;
+      if (shipRef.current && bulletsRef.current.length < 5) {
+        const bulletGeometry = new THREE.CircleGeometry(0.5, 8);
+        const bulletMaterial = new THREE.MeshBasicMaterial({ color: 0x39FF14 });
+        const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+        
+        const angle = shipRotationRef.current;
+        bullet.position.copy(shipRef.current.position);
+        bullet.position.x += Math.cos(angle) * 3;
+        bullet.position.y += Math.sin(angle) * 3;
+        
+        scene.add(bullet);
+        bulletsRef.current.push({
+          mesh: bullet,
+          velocity: new THREE.Vector2(
+            Math.cos(angle) * 1.5,
+            Math.sin(angle) * 1.5
+          ),
+          life: 60
+        });
+      }
+    };
+
     // Keyboard handlers
     const handleKeyDown = (e: KeyboardEvent) => {
       keysRef.current.add(e.key.toLowerCase());
@@ -255,28 +301,7 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
       
       if (e.key === ' ') {
         e.preventDefault();
-        if (isDeadRef.current) return;
-        
-        if (shipRef.current && bulletsRef.current.length < 5) {
-          const bulletGeometry = new THREE.CircleGeometry(0.5, 8);
-          const bulletMaterial = new THREE.MeshBasicMaterial({ color: 0x39FF14 });
-          const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
-          
-          const angle = shipRotationRef.current;
-          bullet.position.copy(shipRef.current.position);
-          bullet.position.x += Math.cos(angle) * 3;
-          bullet.position.y += Math.sin(angle) * 3;
-          
-          scene.add(bullet);
-          bulletsRef.current.push({
-            mesh: bullet,
-            velocity: new THREE.Vector2(
-              Math.cos(angle) * 1.5,
-              Math.sin(angle) * 1.5
-            ),
-            life: 60
-          });
-        }
+        fireBullet();
       }
       
       // Restart on R key when game over
@@ -288,6 +313,16 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
     const handleKeyUp = (e: KeyboardEvent) => {
       keysRef.current.delete(e.key.toLowerCase());
     };
+
+    // Touch fire handler (for mobile button)
+    const handleTouchFire = (e: Event) => {
+      e.preventDefault();
+      setShowInstructions(false);
+      fireBullet();
+    };
+
+    // Add touch fire listener to window for mobile
+    window.addEventListener('touchfire' as keyof WindowEventMap, handleTouchFire as EventListener);
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
@@ -477,6 +512,7 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('touchfire' as keyof WindowEventMap, handleTouchFire as EventListener);
       cancelAnimationFrame(frameRef.current);
       
       if (containerRef.current && rendererRef.current) {
@@ -486,6 +522,12 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
       rendererRef.current?.dispose();
     };
   }, [onScoreChange, onGameOver, resetGame, updateHighScore]);
+
+  // Fire bullet via custom event (for mobile)
+  const handleFireTouch = useCallback(() => {
+    setShowInstructions(false);
+    window.dispatchEvent(new CustomEvent('touchfire'));
+  }, []);
 
   return (
     <>
@@ -550,8 +592,8 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
         </div>
       </div>
       
-      {/* Instructions */}
-      {showInstructions && !gameOver && (
+      {/* Instructions - desktop only */}
+      {showInstructions && !gameOver && !isMobile && (
         <div className="fixed bottom-4 right-4 z-20 text-right pointer-events-none">
           <div 
             className="text-[8px] text-gray-500 leading-relaxed"
@@ -561,6 +603,75 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
             <div>↑ THRUST</div>
             <div>SPACE FIRE</div>
           </div>
+        </div>
+      )}
+
+      {/* Mobile Touch Controls */}
+      {isMobile && !gameOver && (
+        <div className="fixed bottom-4 left-4 right-4 z-40 flex justify-between items-end pointer-events-auto">
+          {/* Left side - D-pad style rotation + thrust */}
+          <div className="flex flex-col items-center gap-2">
+            {/* Thrust button */}
+            <button
+              className="w-14 h-14 rounded-full bg-black/60 border-2 border-neonGreen flex items-center justify-center active:bg-neonGreen/30"
+              style={{ 
+                boxShadow: '0 0 10px rgba(57, 255, 20, 0.5)',
+                touchAction: 'manipulation'
+              }}
+              onTouchStart={(e) => { e.preventDefault(); handleTouchControl('arrowup', true); }}
+              onTouchEnd={(e) => { e.preventDefault(); handleTouchControl('arrowup', false); }}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-neonGreen">
+                <path d="M12 4L20 16H4L12 4Z" fill="currentColor"/>
+              </svg>
+            </button>
+            {/* Left/Right rotation */}
+            <div className="flex gap-2">
+              <button
+                className="w-12 h-12 rounded-full bg-black/60 border-2 border-neonGreen flex items-center justify-center active:bg-neonGreen/30"
+                style={{ 
+                  boxShadow: '0 0 10px rgba(57, 255, 20, 0.5)',
+                  touchAction: 'manipulation'
+                }}
+                onTouchStart={(e) => { e.preventDefault(); handleTouchControl('arrowleft', true); }}
+                onTouchEnd={(e) => { e.preventDefault(); handleTouchControl('arrowleft', false); }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-neonGreen">
+                  <path d="M15 4L7 12L15 20" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+                </svg>
+              </button>
+              <button
+                className="w-12 h-12 rounded-full bg-black/60 border-2 border-neonGreen flex items-center justify-center active:bg-neonGreen/30"
+                style={{ 
+                  boxShadow: '0 0 10px rgba(57, 255, 20, 0.5)',
+                  touchAction: 'manipulation'
+                }}
+                onTouchStart={(e) => { e.preventDefault(); handleTouchControl('arrowright', true); }}
+                onTouchEnd={(e) => { e.preventDefault(); handleTouchControl('arrowright', false); }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-neonGreen">
+                  <path d="M9 4L17 12L9 20" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Right side - Fire button */}
+          <button
+            className="w-20 h-20 rounded-full bg-black/60 border-3 border-orange-500 flex items-center justify-center active:bg-orange-500/30"
+            style={{ 
+              boxShadow: '0 0 15px rgba(249, 115, 22, 0.6)',
+              touchAction: 'manipulation'
+            }}
+            onTouchStart={(e) => { e.preventDefault(); handleFireTouch(); }}
+          >
+            <span 
+              className="text-orange-500 text-xs font-bold"
+              style={{ fontFamily: '"Press Start 2P", "Courier New", monospace' }}
+            >
+              FIRE
+            </span>
+          </button>
         </div>
       )}
       
@@ -596,12 +707,22 @@ const AsteroidsGame = ({ onScoreChange, onGameOver }: AsteroidsGameProps) => {
                 NEW HIGH SCORE!
               </div>
             )}
-            <div 
-              className="text-xs text-gray-400 pointer-events-auto"
-              style={{ fontFamily: '"Press Start 2P", "Courier New", monospace' }}
-            >
-              PRESS R TO RESTART
-            </div>
+            {isMobile ? (
+              <button
+                className="text-xs text-gray-400 pointer-events-auto px-4 py-2 border border-gray-600 active:bg-gray-800"
+                style={{ fontFamily: '"Press Start 2P", "Courier New", monospace' }}
+                onClick={resetGame}
+              >
+                TAP TO RESTART
+              </button>
+            ) : (
+              <div 
+                className="text-xs text-gray-400 pointer-events-auto"
+                style={{ fontFamily: '"Press Start 2P", "Courier New", monospace' }}
+              >
+                PRESS R TO RESTART
+              </div>
+            )}
           </div>
         </div>
       )}
