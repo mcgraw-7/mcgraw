@@ -4,6 +4,11 @@ import Modal from '../app/components/modal';
 import dummyWorks from '../public/dummy';
 import Vanta from "../app/components/vantabg";
 
+interface Skill {
+  name: string;
+  level: number;
+}
+
 interface Job {
   id: number;
   title: string;
@@ -11,7 +16,35 @@ interface Job {
   company: string;
   startDate: string;
   endDate: string;
+  techStack?: string[];
+  skills?: Skill[];
 }
+
+const SkillBar = ({ skill, index }: { skill: Skill; index: number }) => {
+  const [width, setWidth] = useState(0);
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setWidth(skill.level);
+    }, 100 + index * 100);
+    return () => clearTimeout(timer);
+  }, [skill.level, index]);
+
+  return (
+    <div className="mb-3">
+      <div className="flex justify-between mb-1">
+        <span className="text-gray-300 text-sm font-mono">{skill.name}</span>
+        <span className="text-neonGreen text-sm font-mono">{skill.level}%</span>
+      </div>
+      <div className="h-2 bg-gray-800 border border-gray-700 overflow-hidden">
+        <div 
+          className="h-full bg-gradient-to-r from-orange-500 to-neonGreen transition-all duration-700 ease-out"
+          style={{ width: `${width}%` }}
+        />
+      </div>
+    </div>
+  );
+};
 
 const Work = ({ works = [] }: { works?: Job[] }) => {
   const [selectedWork, setSelectedWork] = useState<null | Job>(null);
@@ -111,9 +144,10 @@ const Work = ({ works = [] }: { works?: Job[] }) => {
       {/* Modal */}
       {selectedWork && (
         <Modal onClose={closeModal}>
-          <div className="max-w-2xl">
+          <div className="max-w-2xl lowercase">
+            {/* Header */}
             <div className="mb-6 pb-4 border-b-2 border-orange-500">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">
                 {selectedWork.title}
               </h2>
               <p className="text-orange-500 text-lg font-semibold">{selectedWork.company}</p>
@@ -122,13 +156,44 @@ const Work = ({ works = [] }: { works?: Job[] }) => {
               </p>
             </div>
 
-            <div className="mb-6">
-              <p className="text-gray-300 leading-relaxed text-base mb-4">
-                {selectedWork.description}
-              </p>
-              <div className="mt-4 pt-4 border-t border-gray-700">
-                <p className="text-gray-500 text-xs italic">click outside or use escape to close</p>
+            {/* Tech Stack */}
+            {selectedWork.techStack && (
+              <div className="mb-6">
+                <h3 className="text-neonGreen font-mono text-sm mb-3">
+                  <span className="text-orange-500">$</span> tech_stack
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {selectedWork.techStack.map((tech, i) => (
+                    <span 
+                      key={i}
+                      className="px-3 py-1 bg-gray-800 border border-gray-700 text-gray-300 text-xs font-mono hover:border-neonGreen hover:text-neonGreen transition-colors"
+                    >
+                      {tech}
+                    </span>
+                  ))}
+                </div>
               </div>
+            )}
+
+            {/* Skills Visualization */}
+            {selectedWork.skills && (
+              <div className="mb-6">
+                <h3 className="text-neonGreen font-mono text-sm mb-4">
+                  <span className="text-orange-500">$</span> skills_acquired
+                </h3>
+                <div className="bg-gray-900 border border-gray-700 p-4">
+                  {selectedWork.skills.map((skill, index) => (
+                    <SkillBar key={skill.name} skill={skill} index={index} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Footer */}
+            <div className="pt-4 border-t border-gray-700">
+              <p className="text-gray-500 text-xs italic font-mono">
+                <span className="text-neonGreen">&gt;</span> press esc or click outside to close_
+              </p>
             </div>
           </div>
         </Modal>
