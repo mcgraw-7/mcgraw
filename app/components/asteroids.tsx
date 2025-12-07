@@ -378,8 +378,8 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
       });
     };
 
-    // Initial asteroids (reduced from 8 to 4)
-    for (let i = 0; i < 4; i++) {
+    // Initial asteroids
+    for (let i = 0; i < 6; i++) {
       spawnAsteroid();
     }
 
@@ -707,8 +707,8 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
         return true;
       });
 
-      // Spawn new asteroids when count is low (reduced threshold from 5 to 3)
-      if (asteroidsRef.current.length < 3 && Math.random() < 0.008) {
+      // Spawn new asteroids when count is low
+      if (asteroidsRef.current.length < 5 && Math.random() < 0.012) {
         spawnAsteroid();
       }
 
