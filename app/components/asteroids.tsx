@@ -446,13 +446,17 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
         // Check ship collision with asteroids (only if playing and not invincible)
         if (isPlayingRef.current && !invincibleRef.current) {
           for (const asteroid of asteroidsRef.current) {
+            // Safety check: ensure asteroid has valid mesh and position
+            if (!asteroid || !asteroid.mesh || !asteroid.mesh.position) continue;
+            
             const dist = ship.position.distanceTo(asteroid.mesh.position);
             // Reduced ship collision radius for more forgiving hit detection
-            // Ship visual is ~4 units, but we use 1.5 for the hitbox (center only)
-            const shipRadius = 1.5;
-            // Also reduce asteroid hitbox slightly (use 70% of visual size)
-            const asteroidHitbox = asteroid.size * 0.7;
+            // Ship visual is ~4 units, but we use 1 for the hitbox (center only)
+            const shipRadius = 1;
+            // Also reduce asteroid hitbox to 50% of visual size for more forgiving detection
+            const asteroidHitbox = asteroid.size * 0.5;
             
+            // Only count as collision if distance is really small
             if (dist < asteroidHitbox + shipRadius) {
               // Ship hit!
               livesRef.current--;
@@ -516,11 +520,21 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
             setScore(scoreRef.current);
             onScoreChange?.(scoreRef.current);
             
+            // Give brief invincibility when destroying asteroid (30 frames = 0.5 seconds)
+            // This prevents immediate death from child asteroids spawning on the ship
+            if (!invincibleRef.current) {
+              invincibleRef.current = true;
+              invincibleTimerRef.current = 30;
+            }
+            
             if (asteroid.size > 2) {
               for (let j = 0; j < 2; j++) {
                 const newSize = asteroid.size * 0.5;
-                const offsetX = (Math.random() - 0.5) * 3;
-                const offsetY = (Math.random() - 0.5) * 3;
+                // Spawn children further away from parent position
+                const angle = Math.random() * Math.PI * 2;
+                const spawnDist = asteroid.size + newSize + 3; // Push children away
+                const offsetX = Math.cos(angle) * spawnDist;
+                const offsetY = Math.sin(angle) * spawnDist;
                 spawnAsteroid(
                   asteroid.mesh.position.x + offsetX,
                   asteroid.mesh.position.y + offsetY,
