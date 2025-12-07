@@ -130,7 +130,7 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
     isDeadRef.current = false;
     setGameOver(false);
     invincibleRef.current = true;
-    invincibleTimerRef.current = 120; // 2 seconds of invincibility on start
+    invincibleTimerRef.current = 180; // 3 seconds of invincibility on start
     
     // Reset ship position
     if (shipRef.current && cameraRef.current) {
@@ -232,9 +232,9 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
     scene.add(ship);
     shipRef.current = ship;
 
-    // Start with invincibility
+    // Start with invincibility (3 seconds at 60fps)
     invincibleRef.current = true;
-    invincibleTimerRef.current = 120;
+    invincibleTimerRef.current = 180;
 
     // Create asteroids
     const createAsteroidGeometry = (size: number) => {
@@ -447,9 +447,13 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
         if (isPlayingRef.current && !invincibleRef.current) {
           for (const asteroid of asteroidsRef.current) {
             const dist = ship.position.distanceTo(asteroid.mesh.position);
-            const shipRadius = 3; // Approximate ship collision radius
+            // Reduced ship collision radius for more forgiving hit detection
+            // Ship visual is ~4 units, but we use 1.5 for the hitbox (center only)
+            const shipRadius = 1.5;
+            // Also reduce asteroid hitbox slightly (use 70% of visual size)
+            const asteroidHitbox = asteroid.size * 0.7;
             
-            if (dist < asteroid.size + shipRadius) {
+            if (dist < asteroidHitbox + shipRadius) {
               // Ship hit!
               livesRef.current--;
               setLives(livesRef.current);
@@ -462,9 +466,9 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
                 updateHighScore(scoreRef.current);
                 onGameOver?.();
               } else {
-                // Respawn with invincibility
+                // Respawn with 3 seconds of invincibility (180 frames at 60fps)
                 invincibleRef.current = true;
-                invincibleTimerRef.current = 120;
+                invincibleTimerRef.current = 180;
                 ship.position.set(shipStartX, shipStartY, 0);
                 shipVelocityRef.current.set(0, 0);
               }
