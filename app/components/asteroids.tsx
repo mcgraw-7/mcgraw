@@ -15,6 +15,12 @@ interface Bullet {
   life: number;
 }
 
+interface Powerup {
+  mesh: THREE.Mesh;
+  velocity: THREE.Vector2;
+  rotationSpeed: number;
+}
+
 interface AsteroidsGameProps {
   onScoreChange?: (score: number) => void;
   onGameOver?: () => void;
@@ -29,6 +35,7 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
   const shipRef = useRef<THREE.LineLoop | null>(null);
   const asteroidsRef = useRef<Asteroid[]>([]);
   const bulletsRef = useRef<Bullet[]>([]);
+  const powerupsRef = useRef<Powerup[]>([]);
   const keysRef = useRef<Set<string>>(new Set());
   const shipVelocityRef = useRef(new THREE.Vector2(0, 0));
   const shipRotationRef = useRef(0);
@@ -39,6 +46,9 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
   const invincibleTimerRef = useRef(0);
   const livesRef = useRef(3);
   const isPlayingRef = useRef(isPlaying);
+  const autofireRef = useRef(false);
+  const autofireTimerRef = useRef(0);
+  const powerupActiveRef = useRef(false);
   
   // Keep isPlayingRef in sync with prop
   useEffect(() => {
@@ -51,6 +61,7 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
   const [gameOver, setGameOver] = useState(false);
   const [showInstructions, setShowInstructions] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [powerupActive, setPowerupActive] = useState(false);
 
   // Detect mobile device
   useEffect(() => {
@@ -132,6 +143,12 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
     invincibleRef.current = true;
     invincibleTimerRef.current = 180; // 3 seconds of invincibility on start
     
+    // Reset powerup state
+    powerupActiveRef.current = false;
+    autofireRef.current = false;
+    autofireTimerRef.current = 0;
+    setPowerupActive(false);
+    
     // Reset ship position
     if (shipRef.current && cameraRef.current) {
       const width = window.innerWidth;
@@ -152,6 +169,11 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
       );
       shipRef.current.visible = true;
       shipVelocityRef.current.set(0, 0);
+      
+      // Reset ship color to green
+      if (shipRef.current.material && 'color' in shipRef.current.material) {
+        (shipRef.current.material as THREE.LineBasicMaterial).color.setHex(0x39FF14);
+      }
     }
   }, []);
 
@@ -294,16 +316,70 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
       asteroidsRef.current.push({
         mesh: asteroid,
         velocity: new THREE.Vector2(
-          (Math.random() - 0.5) * 0.3,
-          (Math.random() - 0.5) * 0.3
+          (Math.random() - 0.5) * 0.15, // Slowed down from 0.3
+          (Math.random() - 0.5) * 0.15
         ),
         rotationSpeed: (Math.random() - 0.5) * 0.02,
         size: asteroidSize
       });
     };
 
-    // Initial asteroids
-    for (let i = 0; i < 8; i++) {
+    // Spawn powerup (cyan diamond that gives autofire + invincibility)
+    const spawnPowerup = () => {
+      // Create diamond shape
+      const size = 3;
+      const shape = new THREE.Shape();
+      shape.moveTo(0, size);
+      shape.lineTo(size * 0.7, 0);
+      shape.lineTo(0, -size);
+      shape.lineTo(-size * 0.7, 0);
+      shape.lineTo(0, size);
+      
+      const geometry = new THREE.ShapeGeometry(shape);
+      const material = new THREE.MeshBasicMaterial({ 
+        color: 0x00FFFF, // Cyan
+        transparent: true,
+        opacity: 0.9
+      });
+      const powerup = new THREE.Mesh(geometry, material);
+      
+      // Spawn at random edge
+      const edge = Math.floor(Math.random() * 4);
+      const bounds = frustumSize * aspect / 2;
+      let x = 0, y = 0;
+      switch (edge) {
+        case 0:
+          x = (Math.random() - 0.5) * bounds * 2;
+          y = frustumSize / 2 + size;
+          break;
+        case 1:
+          x = bounds + size;
+          y = (Math.random() - 0.5) * frustumSize;
+          break;
+        case 2:
+          x = (Math.random() - 0.5) * bounds * 2;
+          y = -frustumSize / 2 - size;
+          break;
+        default:
+          x = -bounds - size;
+          y = (Math.random() - 0.5) * frustumSize;
+      }
+      
+      powerup.position.set(x, y, 0);
+      scene.add(powerup);
+      
+      powerupsRef.current.push({
+        mesh: powerup,
+        velocity: new THREE.Vector2(
+          (Math.random() - 0.5) * 0.2,
+          (Math.random() - 0.5) * 0.2
+        ),
+        rotationSpeed: 0.03
+      });
+    };
+
+    // Initial asteroids (reduced from 8 to 4)
+    for (let i = 0; i < 4; i++) {
       spawnAsteroid();
     }
 
@@ -384,6 +460,9 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
 
     window.addEventListener('resize', handleResize);
 
+    // Autofire frame counter
+    let autofireCounter = 0;
+
     // Animation loop
     const animate = () => {
       frameRef.current = requestAnimationFrame(animate);
@@ -392,14 +471,45 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
       const camera = cameraRef.current;
       if (!ship || !camera) return;
 
-      // Handle invincibility timer
-      if (invincibleRef.current) {
+      // Handle invincibility timer (but not powerup invincibility which is tracked separately)
+      if (invincibleRef.current && !powerupActiveRef.current) {
         invincibleTimerRef.current--;
         // Blink ship during invincibility
         ship.visible = Math.floor(invincibleTimerRef.current / 5) % 2 === 0;
         if (invincibleTimerRef.current <= 0) {
           invincibleRef.current = false;
           ship.visible = true;
+        }
+      }
+
+      // Handle powerup timer (autofire + invincibility)
+      if (powerupActiveRef.current) {
+        autofireTimerRef.current--;
+        // Rainbow blink effect during powerup
+        const hue = (autofireTimerRef.current * 5) % 360;
+        if (ship.material && 'color' in ship.material) {
+          (ship.material as THREE.LineBasicMaterial).color.setHSL(hue / 360, 1, 0.5);
+        }
+        ship.visible = true; // Always visible during powerup
+        
+        if (autofireTimerRef.current <= 0) {
+          powerupActiveRef.current = false;
+          autofireRef.current = false;
+          invincibleRef.current = false;
+          setPowerupActive(false);
+          // Reset ship color to green
+          if (ship.material && 'color' in ship.material) {
+            (ship.material as THREE.LineBasicMaterial).color.setHex(0x39FF14);
+          }
+        }
+      }
+
+      // Autofire during powerup
+      if (autofireRef.current && !isDeadRef.current) {
+        autofireCounter++;
+        if (autofireCounter >= 8) { // Fire every 8 frames (~7.5 shots/sec)
+          autofireCounter = 0;
+          fireBullet();
         }
       }
 
@@ -480,6 +590,33 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
             }
           }
         }
+
+        // Check ship collision with powerups (only if playing)
+        if (isPlayingRef.current) {
+          for (let i = powerupsRef.current.length - 1; i >= 0; i--) {
+            const powerup = powerupsRef.current[i];
+            if (!powerup || !powerup.mesh || !powerup.mesh.position) continue;
+            
+            const dist = ship.position.distanceTo(powerup.mesh.position);
+            if (dist < 5) { // Generous pickup radius
+              // Collected powerup!
+              scene.remove(powerup.mesh);
+              powerupsRef.current.splice(i, 1);
+              
+              // Activate powerup: 10 seconds of autofire + invincibility
+              powerupActiveRef.current = true;
+              autofireRef.current = true;
+              invincibleRef.current = true;
+              autofireTimerRef.current = 600; // 10 seconds at 60fps
+              setPowerupActive(true);
+              
+              // Bonus points
+              scoreRef.current += 500;
+              setScore(scoreRef.current);
+              onScoreChange?.(scoreRef.current);
+            }
+          }
+        }
       }
 
       // Update asteroids
@@ -498,6 +635,19 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
         if (asteroid.mesh.position.x < -asteroidBounds) asteroid.mesh.position.x = asteroidBounds;
         if (asteroid.mesh.position.y > bounds.y + asteroid.size) asteroid.mesh.position.y = -(bounds.y + asteroid.size);
         if (asteroid.mesh.position.y < -(bounds.y + asteroid.size)) asteroid.mesh.position.y = bounds.y + asteroid.size;
+      });
+
+      // Update powerups
+      powerupsRef.current.forEach((powerup) => {
+        powerup.mesh.position.x += powerup.velocity.x;
+        powerup.mesh.position.y += powerup.velocity.y;
+        powerup.mesh.rotation.z += powerup.rotationSpeed;
+
+        // Wrap around screen
+        if (powerup.mesh.position.x > bounds.x + 5) powerup.mesh.position.x = -(bounds.x + 5);
+        if (powerup.mesh.position.x < -(bounds.x + 5)) powerup.mesh.position.x = bounds.x + 5;
+        if (powerup.mesh.position.y > bounds.y + 5) powerup.mesh.position.y = -(bounds.y + 5);
+        if (powerup.mesh.position.y < -(bounds.y + 5)) powerup.mesh.position.y = bounds.y + 5;
       });
 
       // Update bullets
@@ -557,8 +707,14 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
         return true;
       });
 
-      if (asteroidsRef.current.length < 5 && Math.random() < 0.01) {
+      // Spawn new asteroids when count is low (reduced threshold from 5 to 3)
+      if (asteroidsRef.current.length < 3 && Math.random() < 0.008) {
         spawnAsteroid();
+      }
+
+      // Rare chance to spawn a powerup (only if none exist and not already powered up)
+      if (powerupsRef.current.length === 0 && !powerupActiveRef.current && Math.random() < 0.001) {
+        spawnPowerup();
       }
 
       renderer.render(scene, camera);
@@ -656,6 +812,15 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
             ))}
           </div>
         </div>
+
+        {/* Powerup indicator */}
+        {powerupActive && (
+          <div className="mt-3">
+            <div className="text-[10px] text-cyan-400 tracking-widest animate-pulse">
+              ⚡ POWERUP ⚡
+            </div>
+          </div>
+        )}
       </div>
       )}
       
