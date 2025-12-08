@@ -603,11 +603,11 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
               scene.remove(powerup.mesh);
               powerupsRef.current.splice(i, 1);
               
-              // Activate powerup: 10 seconds of autofire + invincibility
+              // Activate powerup: 30 seconds of autofire + invincibility
               powerupActiveRef.current = true;
               autofireRef.current = true;
               invincibleRef.current = true;
-              autofireTimerRef.current = 600; // 10 seconds at 60fps
+              autofireTimerRef.current = 1800; // 30 seconds at 60fps
               setPowerupActive(true);
               
               // Bonus points
