@@ -542,6 +542,7 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
     // Autofire frame counter
     let autofireCounter = 0;
     let burst360Counter = 0;
+    let autopilotFireCounter = 0;
 
     // Fire bullet in a specific direction (used by 360-burst)
     const fireBulletAtAngle = (angle: number) => {
@@ -657,120 +658,222 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
 
       // Skip controls if dead
       if (!isDeadRef.current) {
-        const keys = keysRef.current;
-        const rotationSpeed = 0.05;
-        const thrust = 0.015;
-        const friction = 0.995;
-        const maxSpeed = 0.8;
-
-        if (keys.has('arrowleft') || keys.has('a')) {
-          shipRotationRef.current += rotationSpeed;
-        }
-        if (keys.has('arrowright') || keys.has('d')) {
-          shipRotationRef.current -= rotationSpeed;
-        }
-        if (keys.has('arrowup') || keys.has('w')) {
-          shipVelocityRef.current.x += Math.cos(shipRotationRef.current) * thrust;
-          shipVelocityRef.current.y += Math.sin(shipRotationRef.current) * thrust;
-        }
-
-        const speed = shipVelocityRef.current.length();
-        if (speed > maxSpeed) {
-          shipVelocityRef.current.multiplyScalar(maxSpeed / speed);
-        }
-
-        shipVelocityRef.current.multiplyScalar(friction);
-
-        ship.position.x += shipVelocityRef.current.x;
-        ship.position.y += shipVelocityRef.current.y;
-        ship.rotation.z = shipRotationRef.current;
-
-        const bounds = {
-          x: (camera.right || 50) + 5,
-          y: (camera.top || 50) + 5
-        };
-
-        if (ship.position.x > bounds.x) ship.position.x = -bounds.x;
-        if (ship.position.x < -bounds.x) ship.position.x = bounds.x;
-        if (ship.position.y > bounds.y) ship.position.y = -bounds.y;
-        if (ship.position.y < -bounds.y) ship.position.y = bounds.y;
-
-        // Check ship collision with asteroids (only if playing and not invincible)
-        if (isPlayingRef.current && !invincibleRef.current) {
+        // AUTOPILOT MODE: When terminal is open (isPlaying is false)
+        if (!isPlayingRef.current && asteroidsRef.current.length > 0) {
+          const autopilotRotationSpeed = 0.04;
+          const autopilotThrust = 0.012;
+          const autopilotFriction = 0.995;
+          const autopilotMaxSpeed = 0.6;
+          
+          // Find nearest asteroid
+          let nearestAsteroid: Asteroid | null = null;
+          let nearestDist = Infinity;
+          let nearestThreat: Asteroid | null = null;
+          let nearestThreatDist = Infinity;
+          
           for (const asteroid of asteroidsRef.current) {
-            // Safety check: ensure asteroid has valid mesh and position
-            if (!asteroid || !asteroid.mesh || !asteroid.mesh.position) continue;
-            
+            if (!asteroid || !asteroid.mesh) continue;
             const dist = ship.position.distanceTo(asteroid.mesh.position);
-            // Reduced ship collision radius for more forgiving hit detection
-            // Ship visual is ~4 units, but we use 1 for the hitbox (center only)
-            const shipRadius = 1;
-            // Also reduce asteroid hitbox to 50% of visual size for more forgiving detection
-            const asteroidHitbox = asteroid.size * 0.5;
             
-            // Only count as collision if distance is really small
-            if (dist < asteroidHitbox + shipRadius) {
-              // Ship hit!
-              livesRef.current--;
-              setLives(livesRef.current);
-              
-              if (livesRef.current <= 0) {
-                // Game over
-                isDeadRef.current = true;
-                setGameOver(true);
-                ship.visible = false;
-                updateHighScore(scoreRef.current);
-                onGameOver?.();
-              } else {
-                // Respawn with 3 seconds of invincibility (180 frames at 60fps)
-                invincibleRef.current = true;
-                invincibleTimerRef.current = 180;
-                ship.position.set(shipStartX, shipStartY, 0);
-                shipVelocityRef.current.set(0, 0);
-              }
-              break;
+            // Track nearest asteroid for targeting
+            if (dist < nearestDist) {
+              nearestDist = dist;
+              nearestAsteroid = asteroid;
+            }
+            
+            // Track nearest threat (asteroid within danger zone)
+            if (dist < 20 && dist < nearestThreatDist) {
+              nearestThreatDist = dist;
+              nearestThreat = asteroid;
             }
           }
-        }
-
-        // Check ship collision with powerups (only if playing)
-        if (isPlayingRef.current) {
-          for (let i = powerupsRef.current.length - 1; i >= 0; i--) {
-            const powerup = powerupsRef.current[i];
-            if (!powerup || !powerup.mesh || !powerup.mesh.position) continue;
+          
+          // Calculate target angle
+          let targetAngle = shipRotationRef.current;
+          
+          if (nearestThreat) {
+            // EVASION: If an asteroid is too close, turn away from it
+            const threatAngle = Math.atan2(
+              nearestThreat.mesh.position.y - ship.position.y,
+              nearestThreat.mesh.position.x - ship.position.x
+            );
+            // Turn perpendicular to the threat (90 degrees away)
+            targetAngle = threatAngle + Math.PI / 2;
             
-            const dist = ship.position.distanceTo(powerup.mesh.position);
-            if (dist < 5) { // Generous pickup radius
-              // Collected powerup!
-              scene.remove(powerup.mesh);
-              const powerupType = powerup.type;
-              powerupsRef.current.splice(i, 1);
+            // Apply thrust to escape
+            shipVelocityRef.current.x += Math.cos(targetAngle) * autopilotThrust * 1.5;
+            shipVelocityRef.current.y += Math.sin(targetAngle) * autopilotThrust * 1.5;
+          } else if (nearestAsteroid) {
+            // TARGETING: Aim at the nearest asteroid
+            targetAngle = Math.atan2(
+              nearestAsteroid.mesh.position.y - ship.position.y,
+              nearestAsteroid.mesh.position.x - ship.position.x
+            );
+            
+            // Gentle thrust towards target
+            if (nearestDist > 30) {
+              shipVelocityRef.current.x += Math.cos(targetAngle) * autopilotThrust * 0.5;
+              shipVelocityRef.current.y += Math.sin(targetAngle) * autopilotThrust * 0.5;
+            }
+          }
+          
+          // Smoothly rotate towards target angle
+          let angleDiff = targetAngle - shipRotationRef.current;
+          // Normalize angle difference to -PI to PI
+          while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+          while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+          
+          if (Math.abs(angleDiff) > 0.05) {
+            shipRotationRef.current += Math.sign(angleDiff) * autopilotRotationSpeed;
+          }
+          
+          // Apply speed limit and friction
+          const speed = shipVelocityRef.current.length();
+          if (speed > autopilotMaxSpeed) {
+            shipVelocityRef.current.multiplyScalar(autopilotMaxSpeed / speed);
+          }
+          shipVelocityRef.current.multiplyScalar(autopilotFriction);
+          
+          // Update ship position and rotation
+          ship.position.x += shipVelocityRef.current.x;
+          ship.position.y += shipVelocityRef.current.y;
+          ship.rotation.z = shipRotationRef.current;
+          
+          // Screen wrapping
+          const bounds = {
+            x: (camera.right || 50) + 5,
+            y: (camera.top || 50) + 5
+          };
+          if (ship.position.x > bounds.x) ship.position.x = -bounds.x;
+          if (ship.position.x < -bounds.x) ship.position.x = bounds.x;
+          if (ship.position.y > bounds.y) ship.position.y = -bounds.y;
+          if (ship.position.y < -bounds.y) ship.position.y = bounds.y;
+          
+          // Auto-fire when aimed at asteroid (within 15 degrees)
+          if (nearestAsteroid && Math.abs(angleDiff) < 0.26) {
+            autopilotFireCounter++;
+            if (autopilotFireCounter >= 12) { // Fire every 12 frames
+              autopilotFireCounter = 0;
+              fireBullet();
+            }
+          }
+        } else {
+          // MANUAL CONTROL MODE: When game is active (isPlaying is true)
+          const keys = keysRef.current;
+          const rotationSpeed = 0.05;
+          const thrust = 0.015;
+          const friction = 0.995;
+          const maxSpeed = 0.8;
+
+          if (keys.has('arrowleft') || keys.has('a')) {
+            shipRotationRef.current += rotationSpeed;
+          }
+          if (keys.has('arrowright') || keys.has('d')) {
+            shipRotationRef.current -= rotationSpeed;
+          }
+          if (keys.has('arrowup') || keys.has('w')) {
+            shipVelocityRef.current.x += Math.cos(shipRotationRef.current) * thrust;
+            shipVelocityRef.current.y += Math.sin(shipRotationRef.current) * thrust;
+          }
+
+          const speed = shipVelocityRef.current.length();
+          if (speed > maxSpeed) {
+            shipVelocityRef.current.multiplyScalar(maxSpeed / speed);
+          }
+
+          shipVelocityRef.current.multiplyScalar(friction);
+
+          ship.position.x += shipVelocityRef.current.x;
+          ship.position.y += shipVelocityRef.current.y;
+          ship.rotation.z = shipRotationRef.current;
+
+          const bounds = {
+            x: (camera.right || 50) + 5,
+            y: (camera.top || 50) + 5
+          };
+
+          if (ship.position.x > bounds.x) ship.position.x = -bounds.x;
+          if (ship.position.x < -bounds.x) ship.position.x = bounds.x;
+          if (ship.position.y > bounds.y) ship.position.y = -bounds.y;
+          if (ship.position.y < -bounds.y) ship.position.y = bounds.y;
+
+          // Check ship collision with asteroids (only if playing and not invincible)
+          if (isPlayingRef.current && !invincibleRef.current) {
+            for (const asteroid of asteroidsRef.current) {
+              // Safety check: ensure asteroid has valid mesh and position
+              if (!asteroid || !asteroid.mesh || !asteroid.mesh.position) continue;
               
-              if (powerupType === 'autofire') {
-                // Activate autofire powerup: 30 seconds of autofire + invincibility
-                powerupActiveRef.current = true;
-                autofireRef.current = true;
-                invincibleRef.current = true;
-                autofireTimerRef.current = 1800; // 30 seconds at 60fps
-                setPowerupActive(true);
+              const dist = ship.position.distanceTo(asteroid.mesh.position);
+              // Reduced ship collision radius for more forgiving hit detection
+              // Ship visual is ~4 units, but we use 1 for the hitbox (center only)
+              const shipRadius = 1;
+              // Also reduce asteroid hitbox to 50% of visual size for more forgiving detection
+              const asteroidHitbox = asteroid.size * 0.5;
+              
+              // Only count as collision if distance is really small
+              if (dist < asteroidHitbox + shipRadius) {
+                // Ship hit!
+                livesRef.current--;
+                setLives(livesRef.current);
                 
-                // Bonus points
-                scoreRef.current += 500;
-              } else if (powerupType === 'burst360') {
-                // Activate 360-burst powerup: 30 seconds of 360-degree firing + invincibility
-                burst360ActiveRef.current = true;
-                invincibleRef.current = true;
-                burst360TimerRef.current = 1800; // 30 seconds at 60fps
-                
-                // Bonus points (more valuable since rarer)
-                scoreRef.current += 1000;
+                if (livesRef.current <= 0) {
+                  // Game over
+                  isDeadRef.current = true;
+                  setGameOver(true);
+                  ship.visible = false;
+                  updateHighScore(scoreRef.current);
+                  onGameOver?.();
+                } else {
+                  // Respawn with 3 seconds of invincibility (180 frames at 60fps)
+                  invincibleRef.current = true;
+                  invincibleTimerRef.current = 180;
+                  ship.position.set(shipStartX, shipStartY, 0);
+                  shipVelocityRef.current.set(0, 0);
+                }
+                break;
               }
+            }
+          }
+
+          // Check ship collision with powerups (only if playing)
+          if (isPlayingRef.current) {
+            for (let i = powerupsRef.current.length - 1; i >= 0; i--) {
+              const powerup = powerupsRef.current[i];
+              if (!powerup || !powerup.mesh || !powerup.mesh.position) continue;
               
-              setScore(scoreRef.current);
-              onScoreChange?.(scoreRef.current);
-              
-              // Update asteroid speed multiplier
-              asteroidSpeedMultiplierRef.current = 1 + Math.floor(scoreRef.current / 1000) * 0.2;
+              const dist = ship.position.distanceTo(powerup.mesh.position);
+              if (dist < 5) { // Generous pickup radius
+                // Collected powerup!
+                scene.remove(powerup.mesh);
+                const powerupType = powerup.type;
+                powerupsRef.current.splice(i, 1);
+                
+                if (powerupType === 'autofire') {
+                  // Activate autofire powerup: 30 seconds of autofire + invincibility
+                  powerupActiveRef.current = true;
+                  autofireRef.current = true;
+                  invincibleRef.current = true;
+                  autofireTimerRef.current = 1800; // 30 seconds at 60fps
+                  setPowerupActive(true);
+                  
+                  // Bonus points
+                  scoreRef.current += 500;
+                } else if (powerupType === 'burst360') {
+                  // Activate 360-burst powerup: 30 seconds of 360-degree firing + invincibility
+                  burst360ActiveRef.current = true;
+                  invincibleRef.current = true;
+                  burst360TimerRef.current = 1800; // 30 seconds at 60fps
+                  
+                  // Bonus points (more valuable since rarer)
+                  scoreRef.current += 1000;
+                }
+                
+                setScore(scoreRef.current);
+                onScoreChange?.(scoreRef.current);
+                
+                // Update asteroid speed multiplier
+                asteroidSpeedMultiplierRef.current = 1 + Math.floor(scoreRef.current / 1000) * 0.2;
+              }
             }
           }
         }
