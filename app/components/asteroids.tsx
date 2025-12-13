@@ -53,6 +53,7 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
   const burst360ActiveRef = useRef(false);
   const burst360TimerRef = useRef(0);
   const asteroidSpeedMultiplierRef = useRef(1);
+  const bulletSizeMultiplierRef = useRef(1);
   
   // Keep isPlayingRef in sync with prop
   useEffect(() => {
@@ -157,6 +158,9 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
     
     // Reset asteroid speed multiplier
     asteroidSpeedMultiplierRef.current = 1;
+    
+    // Reset bullet size multiplier
+    bulletSizeMultiplierRef.current = 1;
     
     // Reset ship position
     if (shipRef.current && cameraRef.current) {
@@ -466,8 +470,30 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
     const fireBullet = () => {
       if (isDeadRef.current) return;
       if (shipRef.current && bulletsRef.current.length < 5) {
-        const bulletGeometry = new THREE.CircleGeometry(0.5, 8);
-        const bulletMaterial = new THREE.MeshBasicMaterial({ color: 0x39FF14 });
+        // Calculate bullet size based on score milestones
+        const baseSize = 0.5;
+        const size = baseSize * bulletSizeMultiplierRef.current;
+        const segments = 16;
+        
+        // Transition from filled circle to hollow ring as size increases
+        // At 1x size: fully filled, at 2x+ size: hollow ring
+        const hollowness = Math.min(1, (bulletSizeMultiplierRef.current - 1) / 1); // 0 to 1
+        const innerRadius = size * hollowness * 0.6; // Inner hole grows with size
+        
+        let bulletGeometry: THREE.BufferGeometry;
+        if (innerRadius > 0.1) {
+          // Create ring geometry (hollow disc)
+          bulletGeometry = new THREE.RingGeometry(innerRadius, size, segments);
+        } else {
+          // Create filled circle
+          bulletGeometry = new THREE.CircleGeometry(size, segments);
+        }
+        
+        const bulletMaterial = new THREE.MeshBasicMaterial({ 
+          color: 0x39FF14,
+          transparent: true,
+          opacity: 0.9
+        });
         const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
         
         const angle = shipRotationRef.current;
@@ -548,8 +574,27 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
     const fireBulletAtAngle = (angle: number) => {
       if (isDeadRef.current || !shipRef.current) return;
       
-      const bulletGeometry = new THREE.CircleGeometry(0.4, 8);
-      const bulletMaterial = new THREE.MeshBasicMaterial({ color: 0xFF00FF }); // Magenta bullets
+      // Calculate bullet size based on score milestones (slightly smaller for burst)
+      const baseSize = 0.4;
+      const size = baseSize * bulletSizeMultiplierRef.current;
+      const segments = 16;
+      
+      // Transition from filled circle to hollow ring as size increases
+      const hollowness = Math.min(1, (bulletSizeMultiplierRef.current - 1) / 1);
+      const innerRadius = size * hollowness * 0.6;
+      
+      let bulletGeometry: THREE.BufferGeometry;
+      if (innerRadius > 0.08) {
+        bulletGeometry = new THREE.RingGeometry(innerRadius, size, segments);
+      } else {
+        bulletGeometry = new THREE.CircleGeometry(size, segments);
+      }
+      
+      const bulletMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xFF00FF, // Magenta bullets
+        transparent: true,
+        opacity: 0.9
+      });
       const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
       
       bullet.position.copy(shipRef.current.position);
@@ -873,6 +918,8 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
                 
                 // Update asteroid speed multiplier
                 asteroidSpeedMultiplierRef.current = 1 + Math.floor(scoreRef.current / 1000) * 0.2;
+                // Update bullet size multiplier (25% larger per 1000 points)
+                bulletSizeMultiplierRef.current = 1 + Math.floor(scoreRef.current / 1000) * 0.25;
               }
             }
           }
@@ -932,6 +979,8 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
             
             // Increase asteroid speed by 20% for every 1000 points
             asteroidSpeedMultiplierRef.current = 1 + Math.floor(scoreRef.current / 1000) * 0.2;
+            // Increase bullet size by 25% for every 1000 points
+            bulletSizeMultiplierRef.current = 1 + Math.floor(scoreRef.current / 1000) * 0.25;
             
             // Give brief invincibility when destroying asteroid (30 frames = 0.5 seconds)
             // This prevents immediate death from child asteroids spawning on the ship
