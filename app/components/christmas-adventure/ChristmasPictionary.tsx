@@ -102,7 +102,7 @@ export default function ChristmasPictionary() {
       return CHRISTMAS_WORDS[Math.floor(Math.random() * CHRISTMAS_WORDS.length)];
     }
     const word = availableWords[Math.floor(Math.random() * availableWords.length)];
-    setUsedWords(prev => new Set([...prev, word]));
+    setUsedWords(prev => new Set(Array.from(prev).concat(word)));
     return word;
   }, [usedWords]);
 
@@ -346,7 +346,7 @@ export default function ChristmasPictionary() {
         setTimeout(() => startNextRound(), 2000);
         break;
       case 'newRound':
-        const state = msg.data as { round: number, wordLength: number, isDrawer: boolean };
+        const state = msg.data as unknown as { round: number, wordLength: number, isDrawer: boolean };
         setRound(state.round);
         setTimeLeft(60);
         setPlayerRole(state.isDrawer ? 'drawer' : 'guesser');
