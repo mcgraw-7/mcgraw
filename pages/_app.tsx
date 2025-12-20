@@ -15,6 +15,7 @@ const PAGES = ['/', '/work', '/more'];
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const isHomePage = router.pathname === '/';
+  const isChristmasApp = router.pathname.startsWith('/christmas-adventure');
   const [showHelp, setShowHelp] = useState(false);
 
   // Global hotkey handler
@@ -83,7 +84,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <div>
-      {!isHomePage && <Nav />}
+      {!isHomePage && !isChristmasApp && <Nav />}
       <Component {...pageProps} />
       <HotkeyHelp isOpen={showHelp} onClose={() => setShowHelp(false)} />
       <Analytics />

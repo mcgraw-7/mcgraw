@@ -19,6 +19,7 @@ interface Powerup {
   mesh: THREE.Mesh;
   velocity: THREE.Vector2;
   rotationSpeed: number;
+  type: 'autofire' | 'burst360';
 }
 
 interface AsteroidsGameProps {
@@ -49,6 +50,10 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
   const autofireRef = useRef(false);
   const autofireTimerRef = useRef(0);
   const powerupActiveRef = useRef(false);
+  const burst360ActiveRef = useRef(false);
+  const burst360TimerRef = useRef(0);
+  const asteroidSpeedMultiplierRef = useRef(1);
+  const bulletSizeMultiplierRef = useRef(1);
   
   // Keep isPlayingRef in sync with prop
   useEffect(() => {
@@ -147,7 +152,15 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
     powerupActiveRef.current = false;
     autofireRef.current = false;
     autofireTimerRef.current = 0;
+    burst360ActiveRef.current = false;
+    burst360TimerRef.current = 0;
     setPowerupActive(false);
+    
+    // Reset asteroid speed multiplier
+    asteroidSpeedMultiplierRef.current = 1;
+    
+    // Reset bullet size multiplier
+    bulletSizeMultiplierRef.current = 1;
     
     // Reset ship position
     if (shipRef.current && cameraRef.current) {
@@ -313,11 +326,15 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
       asteroid.position.set(x, y, 0);
       scene.add(asteroid);
       
+      // Base speed increases by 20% for every 1000 points
+      const baseSpeed = 0.15;
+      const speed = baseSpeed * asteroidSpeedMultiplierRef.current;
+      
       asteroidsRef.current.push({
         mesh: asteroid,
         velocity: new THREE.Vector2(
-          (Math.random() - 0.5) * 0.15, // Slowed down from 0.3
-          (Math.random() - 0.5) * 0.15
+          (Math.random() - 0.5) * speed,
+          (Math.random() - 0.5) * speed
         ),
         rotationSpeed: (Math.random() - 0.5) * 0.02,
         size: asteroidSize
@@ -374,7 +391,73 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
           (Math.random() - 0.5) * 0.2,
           (Math.random() - 0.5) * 0.2
         ),
-        rotationSpeed: 0.03
+        rotationSpeed: 0.03,
+        type: 'autofire'
+      });
+    };
+
+    // Spawn 360-burst powerup (magenta star that shoots in all directions)
+    const spawn360BurstPowerup = () => {
+      // Create star shape
+      const size = 3;
+      const shape = new THREE.Shape();
+      const points = 6; // 6-pointed star
+      const outerRadius = size;
+      const innerRadius = size * 0.4;
+      
+      for (let i = 0; i <= points * 2; i++) {
+        const angle = (i / (points * 2)) * Math.PI * 2 - Math.PI / 2;
+        const radius = i % 2 === 0 ? outerRadius : innerRadius;
+        const px = Math.cos(angle) * radius;
+        const py = Math.sin(angle) * radius;
+        if (i === 0) {
+          shape.moveTo(px, py);
+        } else {
+          shape.lineTo(px, py);
+        }
+      }
+      
+      const geometry = new THREE.ShapeGeometry(shape);
+      const material = new THREE.MeshBasicMaterial({ 
+        color: 0xFF00FF, // Magenta
+        transparent: true,
+        opacity: 0.9
+      });
+      const powerup = new THREE.Mesh(geometry, material);
+      
+      // Spawn at random edge
+      const edge = Math.floor(Math.random() * 4);
+      const bounds = frustumSize * aspect / 2;
+      let x = 0, y = 0;
+      switch (edge) {
+        case 0:
+          x = (Math.random() - 0.5) * bounds * 2;
+          y = frustumSize / 2 + size;
+          break;
+        case 1:
+          x = bounds + size;
+          y = (Math.random() - 0.5) * frustumSize;
+          break;
+        case 2:
+          x = (Math.random() - 0.5) * bounds * 2;
+          y = -frustumSize / 2 - size;
+          break;
+        default:
+          x = -bounds - size;
+          y = (Math.random() - 0.5) * frustumSize;
+      }
+      
+      powerup.position.set(x, y, 0);
+      scene.add(powerup);
+      
+      powerupsRef.current.push({
+        mesh: powerup,
+        velocity: new THREE.Vector2(
+          (Math.random() - 0.5) * 0.15,
+          (Math.random() - 0.5) * 0.15
+        ),
+        rotationSpeed: 0.05,
+        type: 'burst360'
       });
     };
 
@@ -387,8 +470,30 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
     const fireBullet = () => {
       if (isDeadRef.current) return;
       if (shipRef.current && bulletsRef.current.length < 5) {
-        const bulletGeometry = new THREE.CircleGeometry(0.5, 8);
-        const bulletMaterial = new THREE.MeshBasicMaterial({ color: 0x39FF14 });
+        // Calculate bullet size based on score milestones
+        const baseSize = 0.5;
+        const size = baseSize * bulletSizeMultiplierRef.current;
+        const segments = 16;
+        
+        // Transition from filled circle to hollow ring as size increases
+        // At 1x size: fully filled, at 2x+ size: hollow ring
+        const hollowness = Math.min(1, (bulletSizeMultiplierRef.current - 1) / 1); // 0 to 1
+        const innerRadius = size * hollowness * 0.6; // Inner hole grows with size
+        
+        let bulletGeometry: THREE.BufferGeometry;
+        if (innerRadius > 0.1) {
+          // Create ring geometry (hollow disc)
+          bulletGeometry = new THREE.RingGeometry(innerRadius, size, segments);
+        } else {
+          // Create filled circle
+          bulletGeometry = new THREE.CircleGeometry(size, segments);
+        }
+        
+        const bulletMaterial = new THREE.MeshBasicMaterial({ 
+          color: 0x39FF14,
+          transparent: true,
+          opacity: 0.9
+        });
         const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
         
         const angle = shipRotationRef.current;
@@ -462,6 +567,50 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
 
     // Autofire frame counter
     let autofireCounter = 0;
+    let burst360Counter = 0;
+    let autopilotFireCounter = 0;
+
+    // Fire bullet in a specific direction (used by 360-burst)
+    const fireBulletAtAngle = (angle: number) => {
+      if (isDeadRef.current || !shipRef.current) return;
+      
+      // Calculate bullet size based on score milestones (slightly smaller for burst)
+      const baseSize = 0.4;
+      const size = baseSize * bulletSizeMultiplierRef.current;
+      const segments = 16;
+      
+      // Transition from filled circle to hollow ring as size increases
+      const hollowness = Math.min(1, (bulletSizeMultiplierRef.current - 1) / 1);
+      const innerRadius = size * hollowness * 0.6;
+      
+      let bulletGeometry: THREE.BufferGeometry;
+      if (innerRadius > 0.08) {
+        bulletGeometry = new THREE.RingGeometry(innerRadius, size, segments);
+      } else {
+        bulletGeometry = new THREE.CircleGeometry(size, segments);
+      }
+      
+      const bulletMaterial = new THREE.MeshBasicMaterial({ 
+        color: 0xFF00FF, // Magenta bullets
+        transparent: true,
+        opacity: 0.9
+      });
+      const bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+      
+      bullet.position.copy(shipRef.current.position);
+      bullet.position.x += Math.cos(angle) * 3;
+      bullet.position.y += Math.sin(angle) * 3;
+      
+      scene.add(bullet);
+      bulletsRef.current.push({
+        mesh: bullet,
+        velocity: new THREE.Vector2(
+          Math.cos(angle) * 1.2,
+          Math.sin(angle) * 1.2
+        ),
+        life: 45 // Slightly shorter life for 360 bullets
+      });
+    };
 
     // Animation loop
     const animate = () => {
@@ -495,10 +644,36 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
         if (autofireTimerRef.current <= 0) {
           powerupActiveRef.current = false;
           autofireRef.current = false;
-          invincibleRef.current = false;
+          // Only disable invincibility if burst360 is also not active
+          if (!burst360ActiveRef.current) {
+            invincibleRef.current = false;
+          }
           setPowerupActive(false);
-          // Reset ship color to green
-          if (ship.material && 'color' in ship.material) {
+          // Reset ship color to green (only if burst360 not active)
+          if (!burst360ActiveRef.current && ship.material && 'color' in ship.material) {
+            (ship.material as THREE.LineBasicMaterial).color.setHex(0x39FF14);
+          }
+        }
+      }
+
+      // Handle 360-burst powerup timer
+      if (burst360ActiveRef.current) {
+        burst360TimerRef.current--;
+        // Magenta pulsing effect during 360-burst
+        const pulse = 0.5 + Math.sin(burst360TimerRef.current * 0.2) * 0.5;
+        if (!powerupActiveRef.current && ship.material && 'color' in ship.material) {
+          (ship.material as THREE.LineBasicMaterial).color.setHSL(0.833, 1, pulse * 0.5 + 0.25); // Magenta hue
+        }
+        ship.visible = true;
+        
+        if (burst360TimerRef.current <= 0) {
+          burst360ActiveRef.current = false;
+          // Only disable invincibility if autofire powerup is also not active
+          if (!powerupActiveRef.current) {
+            invincibleRef.current = false;
+          }
+          // Reset ship color to green (only if autofire not active)
+          if (!powerupActiveRef.current && ship.material && 'color' in ship.material) {
             (ship.material as THREE.LineBasicMaterial).color.setHex(0x39FF14);
           }
         }
@@ -513,107 +688,239 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
         }
       }
 
-      // Skip controls if dead
-      if (!isDeadRef.current) {
-        const keys = keysRef.current;
-        const rotationSpeed = 0.05;
-        const thrust = 0.015;
-        const friction = 0.995;
-        const maxSpeed = 0.8;
-
-        if (keys.has('arrowleft') || keys.has('a')) {
-          shipRotationRef.current += rotationSpeed;
-        }
-        if (keys.has('arrowright') || keys.has('d')) {
-          shipRotationRef.current -= rotationSpeed;
-        }
-        if (keys.has('arrowup') || keys.has('w')) {
-          shipVelocityRef.current.x += Math.cos(shipRotationRef.current) * thrust;
-          shipVelocityRef.current.y += Math.sin(shipRotationRef.current) * thrust;
-        }
-
-        const speed = shipVelocityRef.current.length();
-        if (speed > maxSpeed) {
-          shipVelocityRef.current.multiplyScalar(maxSpeed / speed);
-        }
-
-        shipVelocityRef.current.multiplyScalar(friction);
-
-        ship.position.x += shipVelocityRef.current.x;
-        ship.position.y += shipVelocityRef.current.y;
-        ship.rotation.z = shipRotationRef.current;
-
-        const bounds = {
-          x: (camera.right || 50) + 5,
-          y: (camera.top || 50) + 5
-        };
-
-        if (ship.position.x > bounds.x) ship.position.x = -bounds.x;
-        if (ship.position.x < -bounds.x) ship.position.x = bounds.x;
-        if (ship.position.y > bounds.y) ship.position.y = -bounds.y;
-        if (ship.position.y < -bounds.y) ship.position.y = bounds.y;
-
-        // Check ship collision with asteroids (only if playing and not invincible)
-        if (isPlayingRef.current && !invincibleRef.current) {
-          for (const asteroid of asteroidsRef.current) {
-            // Safety check: ensure asteroid has valid mesh and position
-            if (!asteroid || !asteroid.mesh || !asteroid.mesh.position) continue;
-            
-            const dist = ship.position.distanceTo(asteroid.mesh.position);
-            // Reduced ship collision radius for more forgiving hit detection
-            // Ship visual is ~4 units, but we use 1 for the hitbox (center only)
-            const shipRadius = 1;
-            // Also reduce asteroid hitbox to 50% of visual size for more forgiving detection
-            const asteroidHitbox = asteroid.size * 0.5;
-            
-            // Only count as collision if distance is really small
-            if (dist < asteroidHitbox + shipRadius) {
-              // Ship hit!
-              livesRef.current--;
-              setLives(livesRef.current);
-              
-              if (livesRef.current <= 0) {
-                // Game over
-                isDeadRef.current = true;
-                setGameOver(true);
-                ship.visible = false;
-                updateHighScore(scoreRef.current);
-                onGameOver?.();
-              } else {
-                // Respawn with 3 seconds of invincibility (180 frames at 60fps)
-                invincibleRef.current = true;
-                invincibleTimerRef.current = 180;
-                ship.position.set(shipStartX, shipStartY, 0);
-                shipVelocityRef.current.set(0, 0);
-              }
-              break;
-            }
+      // 360-burst firing during burst powerup
+      if (burst360ActiveRef.current && !isDeadRef.current) {
+        burst360Counter++;
+        if (burst360Counter >= 15) { // Fire every 15 frames (~4 bursts/sec)
+          burst360Counter = 0;
+          // Fire 12 bullets in all directions (every 30 degrees)
+          for (let i = 0; i < 12; i++) {
+            const angle = (i / 12) * Math.PI * 2;
+            fireBulletAtAngle(angle);
           }
         }
+      }
 
-        // Check ship collision with powerups (only if playing)
-        if (isPlayingRef.current) {
-          for (let i = powerupsRef.current.length - 1; i >= 0; i--) {
-            const powerup = powerupsRef.current[i];
-            if (!powerup || !powerup.mesh || !powerup.mesh.position) continue;
+      // Skip controls if dead
+      if (!isDeadRef.current) {
+        // AUTOPILOT MODE: When terminal is open (isPlaying is false) - SLOW & GRACEFUL
+        if (!isPlayingRef.current && asteroidsRef.current.length > 0) {
+          const autopilotRotationSpeed = 0.015;  // Reduced from 0.04 - slower turning
+          const autopilotThrust = 0.004;         // Reduced from 0.012 - gentler acceleration
+          const autopilotFriction = 0.992;       // More friction for smoother movement
+          const autopilotMaxSpeed = 0.25;        // Reduced from 0.6 - slower cruising
+          
+          // Find nearest asteroid
+          let nearestAsteroid: Asteroid | null = null;
+          let nearestDist = Infinity;
+          let nearestThreat: Asteroid | null = null;
+          let nearestThreatDist = Infinity;
+          
+          for (const asteroid of asteroidsRef.current) {
+            if (!asteroid || !asteroid.mesh) continue;
+            const dist = ship.position.distanceTo(asteroid.mesh.position);
             
-            const dist = ship.position.distanceTo(powerup.mesh.position);
-            if (dist < 5) { // Generous pickup radius
-              // Collected powerup!
-              scene.remove(powerup.mesh);
-              powerupsRef.current.splice(i, 1);
+            // Track nearest asteroid for targeting
+            if (dist < nearestDist) {
+              nearestDist = dist;
+              nearestAsteroid = asteroid;
+            }
+            
+            // Track nearest threat (asteroid within danger zone)
+            if (dist < 20 && dist < nearestThreatDist) {
+              nearestThreatDist = dist;
+              nearestThreat = asteroid;
+            }
+          }
+          
+          // Calculate target angle
+          let targetAngle = shipRotationRef.current;
+          
+          if (nearestThreat) {
+            // EVASION: If an asteroid is too close, turn away from it
+            const threatAngle = Math.atan2(
+              nearestThreat.mesh.position.y - ship.position.y,
+              nearestThreat.mesh.position.x - ship.position.x
+            );
+            // Turn perpendicular to the threat (90 degrees away)
+            targetAngle = threatAngle + Math.PI / 2;
+            
+            // Apply thrust to escape
+            shipVelocityRef.current.x += Math.cos(targetAngle) * autopilotThrust * 1.5;
+            shipVelocityRef.current.y += Math.sin(targetAngle) * autopilotThrust * 1.5;
+          } else if (nearestAsteroid) {
+            // TARGETING: Aim at the nearest asteroid
+            targetAngle = Math.atan2(
+              nearestAsteroid.mesh.position.y - ship.position.y,
+              nearestAsteroid.mesh.position.x - ship.position.x
+            );
+            
+            // Gentle thrust towards target
+            if (nearestDist > 30) {
+              shipVelocityRef.current.x += Math.cos(targetAngle) * autopilotThrust * 0.5;
+              shipVelocityRef.current.y += Math.sin(targetAngle) * autopilotThrust * 0.5;
+            }
+          }
+          
+          // Smoothly rotate towards target angle
+          let angleDiff = targetAngle - shipRotationRef.current;
+          // Normalize angle difference to -PI to PI
+          while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+          while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+          
+          if (Math.abs(angleDiff) > 0.05) {
+            shipRotationRef.current += Math.sign(angleDiff) * autopilotRotationSpeed;
+          }
+          
+          // Apply speed limit and friction
+          const speed = shipVelocityRef.current.length();
+          if (speed > autopilotMaxSpeed) {
+            shipVelocityRef.current.multiplyScalar(autopilotMaxSpeed / speed);
+          }
+          shipVelocityRef.current.multiplyScalar(autopilotFriction);
+          
+          // Update ship position and rotation
+          ship.position.x += shipVelocityRef.current.x;
+          ship.position.y += shipVelocityRef.current.y;
+          ship.rotation.z = shipRotationRef.current;
+          
+          // Screen wrapping
+          const bounds = {
+            x: (camera.right || 50) + 5,
+            y: (camera.top || 50) + 5
+          };
+          if (ship.position.x > bounds.x) ship.position.x = -bounds.x;
+          if (ship.position.x < -bounds.x) ship.position.x = bounds.x;
+          if (ship.position.y > bounds.y) ship.position.y = -bounds.y;
+          if (ship.position.y < -bounds.y) ship.position.y = bounds.y;
+          
+          // Auto-fire when aimed at asteroid (within 15 degrees)
+          if (nearestAsteroid && Math.abs(angleDiff) < 0.26) {
+            autopilotFireCounter++;
+            if (autopilotFireCounter >= 30) { // Fire every 30 frames (~2 shots/sec) - slower & deliberate
+              autopilotFireCounter = 0;
+              fireBullet();
+            }
+          }
+        } else {
+          // MANUAL CONTROL MODE: When game is active (isPlaying is true)
+          const keys = keysRef.current;
+          const rotationSpeed = 0.05;
+          const thrust = 0.015;
+          const friction = 0.995;
+          const maxSpeed = 0.8;
+
+          if (keys.has('arrowleft') || keys.has('a')) {
+            shipRotationRef.current += rotationSpeed;
+          }
+          if (keys.has('arrowright') || keys.has('d')) {
+            shipRotationRef.current -= rotationSpeed;
+          }
+          if (keys.has('arrowup') || keys.has('w')) {
+            shipVelocityRef.current.x += Math.cos(shipRotationRef.current) * thrust;
+            shipVelocityRef.current.y += Math.sin(shipRotationRef.current) * thrust;
+          }
+
+          const speed = shipVelocityRef.current.length();
+          if (speed > maxSpeed) {
+            shipVelocityRef.current.multiplyScalar(maxSpeed / speed);
+          }
+
+          shipVelocityRef.current.multiplyScalar(friction);
+
+          ship.position.x += shipVelocityRef.current.x;
+          ship.position.y += shipVelocityRef.current.y;
+          ship.rotation.z = shipRotationRef.current;
+
+          const bounds = {
+            x: (camera.right || 50) + 5,
+            y: (camera.top || 50) + 5
+          };
+
+          if (ship.position.x > bounds.x) ship.position.x = -bounds.x;
+          if (ship.position.x < -bounds.x) ship.position.x = bounds.x;
+          if (ship.position.y > bounds.y) ship.position.y = -bounds.y;
+          if (ship.position.y < -bounds.y) ship.position.y = bounds.y;
+
+          // Check ship collision with asteroids (only if playing and not invincible)
+          if (isPlayingRef.current && !invincibleRef.current) {
+            for (const asteroid of asteroidsRef.current) {
+              // Safety check: ensure asteroid has valid mesh and position
+              if (!asteroid || !asteroid.mesh || !asteroid.mesh.position) continue;
               
-              // Activate powerup: 10 seconds of autofire + invincibility
-              powerupActiveRef.current = true;
-              autofireRef.current = true;
-              invincibleRef.current = true;
-              autofireTimerRef.current = 600; // 10 seconds at 60fps
-              setPowerupActive(true);
+              const dist = ship.position.distanceTo(asteroid.mesh.position);
+              // Reduced ship collision radius for more forgiving hit detection
+              // Ship visual is ~4 units, but we use 1 for the hitbox (center only)
+              const shipRadius = 1;
+              // Also reduce asteroid hitbox to 50% of visual size for more forgiving detection
+              const asteroidHitbox = asteroid.size * 0.5;
               
-              // Bonus points
-              scoreRef.current += 500;
-              setScore(scoreRef.current);
-              onScoreChange?.(scoreRef.current);
+              // Only count as collision if distance is really small
+              if (dist < asteroidHitbox + shipRadius) {
+                // Ship hit!
+                livesRef.current--;
+                setLives(livesRef.current);
+                
+                if (livesRef.current <= 0) {
+                  // Game over
+                  isDeadRef.current = true;
+                  setGameOver(true);
+                  ship.visible = false;
+                  updateHighScore(scoreRef.current);
+                  onGameOver?.();
+                } else {
+                  // Respawn with 3 seconds of invincibility (180 frames at 60fps)
+                  invincibleRef.current = true;
+                  invincibleTimerRef.current = 180;
+                  ship.position.set(shipStartX, shipStartY, 0);
+                  shipVelocityRef.current.set(0, 0);
+                }
+                break;
+              }
+            }
+          }
+
+          // Check ship collision with powerups (only if playing)
+          if (isPlayingRef.current) {
+            for (let i = powerupsRef.current.length - 1; i >= 0; i--) {
+              const powerup = powerupsRef.current[i];
+              if (!powerup || !powerup.mesh || !powerup.mesh.position) continue;
+              
+              const dist = ship.position.distanceTo(powerup.mesh.position);
+              if (dist < 5) { // Generous pickup radius
+                // Collected powerup!
+                scene.remove(powerup.mesh);
+                const powerupType = powerup.type;
+                powerupsRef.current.splice(i, 1);
+                
+                if (powerupType === 'autofire') {
+                  // Activate autofire powerup: 30 seconds of autofire + invincibility
+                  powerupActiveRef.current = true;
+                  autofireRef.current = true;
+                  invincibleRef.current = true;
+                  autofireTimerRef.current = 1800; // 30 seconds at 60fps
+                  setPowerupActive(true);
+                  
+                  // Bonus points
+                  scoreRef.current += 500;
+                } else if (powerupType === 'burst360') {
+                  // Activate 360-burst powerup: 30 seconds of 360-degree firing + invincibility
+                  burst360ActiveRef.current = true;
+                  invincibleRef.current = true;
+                  burst360TimerRef.current = 1800; // 30 seconds at 60fps
+                  
+                  // Bonus points (more valuable since rarer)
+                  scoreRef.current += 1000;
+                }
+                
+                setScore(scoreRef.current);
+                onScoreChange?.(scoreRef.current);
+                
+                // Update asteroid speed multiplier
+                asteroidSpeedMultiplierRef.current = 1 + Math.floor(scoreRef.current / 1000) * 0.2;
+                // Update bullet size multiplier (25% larger per 1000 points)
+                bulletSizeMultiplierRef.current = 1 + Math.floor(scoreRef.current / 1000) * 0.25;
+              }
             }
           }
         }
@@ -670,6 +977,11 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
             setScore(scoreRef.current);
             onScoreChange?.(scoreRef.current);
             
+            // Increase asteroid speed by 20% for every 1000 points
+            asteroidSpeedMultiplierRef.current = 1 + Math.floor(scoreRef.current / 1000) * 0.2;
+            // Increase bullet size by 25% for every 1000 points
+            bulletSizeMultiplierRef.current = 1 + Math.floor(scoreRef.current / 1000) * 0.25;
+            
             // Give brief invincibility when destroying asteroid (30 frames = 0.5 seconds)
             // This prevents immediate death from child asteroids spawning on the ship
             if (!invincibleRef.current) {
@@ -713,8 +1025,15 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
       }
 
       // Rare chance to spawn a powerup (only if none exist and not already powered up)
-      if (powerupsRef.current.length === 0 && !powerupActiveRef.current && Math.random() < 0.001) {
-        spawnPowerup();
+      if (powerupsRef.current.length === 0 && !powerupActiveRef.current && !burst360ActiveRef.current) {
+        const rand = Math.random();
+        if (rand < 0.001) {
+          // Cyan autofire powerup (0.1% chance per frame)
+          spawnPowerup();
+        } else if (rand < 0.00125) {
+          // Magenta 360-burst powerup (0.025% chance per frame - 4x rarer than autofire)
+          spawn360BurstPowerup();
+        }
       }
 
       renderer.render(scene, camera);
