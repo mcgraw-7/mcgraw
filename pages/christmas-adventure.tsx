@@ -159,9 +159,9 @@ export default function ChristmasAdventure() {
         <div className="text-center mb-12">
           <div className="text-6xl mb-4">🎄</div>
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-2 drop-shadow-lg">
-            Christmas Adventure
+            McGriswold Christmas Vacation
           </h1>
-          <p className="text-xl text-blue-200">Road Trip Edition 🚗</p>
+          <p className="text-xl text-blue-200">2025 Edition</p>
           <p className="text-sm text-blue-300 mt-1">For Kinsley &amp; Emma</p>
           
           {/* Player badges */}
