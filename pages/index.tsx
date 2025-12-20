@@ -1,6 +1,7 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import dynamic from 'next/dynamic';
 
 // Dynamic import to avoid SSR issues with Three.js
@@ -8,9 +9,59 @@ const AsteroidsGame = dynamic(() => import('../app/components/asteroids'), {
   ssr: false,
 });
 
+// Secret sequence: YELLOW YELLOW YELLOW GREEN YELLOW
+const SECRET_SEQUENCE = ['yellow', 'yellow', 'yellow', 'green', 'yellow'];
+
 export default function Home() {
   const [isTerminalOpen, setIsTerminalOpen] = useState(true);
   const [isClosing, setIsClosing] = useState(false);
+  const [buttonSequence, setButtonSequence] = useState<string[]>([]);
+  const [showUnlockEffect, setShowUnlockEffect] = useState(false);
+  const sequenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
+
+  // Check if sequence matches the secret
+  const checkSequence = useCallback((newSequence: string[]) => {
+    // Check if current sequence matches the beginning of secret
+    const matches = newSequence.every((color, index) => color === SECRET_SEQUENCE[index]);
+    
+    if (!matches) {
+      // Wrong sequence - reset
+      setButtonSequence([]);
+      return;
+    }
+    
+    // Check if complete sequence entered
+    if (newSequence.length === SECRET_SEQUENCE.length) {
+      // SUCCESS! Trigger unlock
+      setShowUnlockEffect(true);
+      setTimeout(() => {
+        router.push('/christmas-adventure');
+      }, 1500);
+    }
+  }, [router]);
+
+  const handleButtonClick = useCallback((color: 'red' | 'yellow' | 'green') => {
+    // Red button still closes terminal
+    if (color === 'red') {
+      return; // Let the original handler deal with this
+    }
+    
+    // Clear any existing timeout
+    if (sequenceTimeoutRef.current) {
+      clearTimeout(sequenceTimeoutRef.current);
+    }
+    
+    // Add to sequence
+    const newSequence = [...buttonSequence, color];
+    setButtonSequence(newSequence);
+    checkSequence(newSequence);
+    
+    // Reset sequence after 3 seconds of inactivity
+    sequenceTimeoutRef.current = setTimeout(() => {
+      setButtonSequence([]);
+    }, 3000);
+  }, [buttonSequence, checkSequence]);
 
   const handleCloseTerminal = useCallback(() => {
     if (!isTerminalOpen || isClosing) return;
@@ -57,6 +108,15 @@ export default function Home() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handleCloseTerminal, handleOpenTerminal]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (sequenceTimeoutRef.current) {
+        clearTimeout(sequenceTimeoutRef.current);
+      }
+    };
+  }, []);
 
   return (
     <main className="h-screen bg-black overflow-hidden flex items-center justify-center p-8 relative">
@@ -117,7 +177,61 @@ export default function Home() {
         .reopen-dot {
           animation: pulse-glow 2s ease-in-out infinite;
         }
+
+        @keyframes unlock-flash {
+          0%, 100% { opacity: 0; }
+          50% { opacity: 1; }
+        }
+
+        @keyframes snowfall {
+          0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
+        }
+
+        .unlock-overlay {
+          animation: unlock-flash 0.3s ease-in-out 3;
+        }
+
+        .snowflake {
+          animation: snowfall linear forwards;
+        }
       `}</style>
+
+      {/* Secret Unlock Effect */}
+      {showUnlockEffect && (
+        <>
+          {/* Flash overlay */}
+          <div className="unlock-overlay fixed inset-0 bg-green-500 z-[100] pointer-events-none" />
+          
+          {/* Snowflakes */}
+          <div className="fixed inset-0 z-[99] pointer-events-none overflow-hidden">
+            {[...Array(50)].map((_, i) => (
+              <div
+                key={i}
+                className="snowflake absolute text-2xl"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  animationDuration: `${1 + Math.random() * 2}s`,
+                  animationDelay: `${Math.random() * 0.5}s`,
+                }}
+              >
+                ❄️
+              </div>
+            ))}
+          </div>
+
+          {/* Message */}
+          <div className="fixed inset-0 z-[101] flex items-center justify-center pointer-events-none">
+            <div className="text-center animate-bounce">
+              <div className="text-6xl mb-4">🎄🎅🎁</div>
+              <h2 className="text-4xl font-bold text-white drop-shadow-lg">
+                Secret Unlocked!
+              </h2>
+              <p className="text-xl text-green-300 mt-2">Loading Christmas Adventure...</p>
+            </div>
+          </div>
+        </>
+      )}
       
       {/* Reopen dot - shown when terminal is closed */}
       {!isTerminalOpen && (
@@ -131,7 +245,7 @@ export default function Home() {
       {/* Main Terminal Interface */}
       {isTerminalOpen && (
         <div className={`relative bg-gray-900 border-2 border-gray-700 max-w-4xl w-full h-[calc(100vh-64px)] transition-all duration-300 hover:border-orange-500 flex flex-col z-10 ${isClosing ? 'crt-closing' : 'crt-opening'}`}>
-        {/* Accent bars */}
+          {/* Accent bars */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-500 via-orange-500 to-transparent"></div>
         <div className="absolute bottom-0 left-0 w-1 h-full bg-gradient-to-b from-neonGreen via-neonGreen to-transparent opacity-30"></div>
         
@@ -142,9 +256,28 @@ export default function Home() {
             className="w-3 h-3 rounded-full bg-red-500 hover:bg-red-400 transition-colors cursor-pointer hover:scale-110"
             title="Close terminal"
           />
-          <div className="w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-400 transition-colors cursor-pointer"></div>
-          <div className="w-3 h-3 rounded-full bg-green-500 hover:bg-green-400 transition-colors cursor-pointer"></div>
+          <button 
+            onClick={() => handleButtonClick('yellow')}
+            className={`w-3 h-3 rounded-full bg-yellow-500 hover:bg-yellow-400 transition-all cursor-pointer ${
+              buttonSequence.length > 0 ? 'ring-2 ring-yellow-300 ring-opacity-50' : ''
+            }`}
+            title="Yellow"
+          />
+          <button 
+            onClick={() => handleButtonClick('green')}
+            className={`w-3 h-3 rounded-full bg-green-500 hover:bg-green-400 transition-all cursor-pointer ${
+              buttonSequence.length > 0 ? 'ring-2 ring-green-300 ring-opacity-50' : ''
+            }`}
+            title="Green"
+          />
           <span className="ml-4 text-gray-500 text-xs font-mono">mcgraw@portfolio ~ home</span>
+          
+          {/* Secret hint - shows progress subtly */}
+          {buttonSequence.length > 0 && buttonSequence.length < SECRET_SEQUENCE.length && (
+            <span className="ml-auto text-gray-600 text-xs">
+              {'🎄'.repeat(buttonSequence.length)}
+            </span>
+          )}
         </div>
 
         {/* Terminal Content - Scrollable */}

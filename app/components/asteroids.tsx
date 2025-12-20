@@ -703,12 +703,12 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
 
       // Skip controls if dead
       if (!isDeadRef.current) {
-        // AUTOPILOT MODE: When terminal is open (isPlaying is false)
+        // AUTOPILOT MODE: When terminal is open (isPlaying is false) - SLOW & GRACEFUL
         if (!isPlayingRef.current && asteroidsRef.current.length > 0) {
-          const autopilotRotationSpeed = 0.04;
-          const autopilotThrust = 0.012;
-          const autopilotFriction = 0.995;
-          const autopilotMaxSpeed = 0.6;
+          const autopilotRotationSpeed = 0.015;  // Reduced from 0.04 - slower turning
+          const autopilotThrust = 0.004;         // Reduced from 0.012 - gentler acceleration
+          const autopilotFriction = 0.992;       // More friction for smoother movement
+          const autopilotMaxSpeed = 0.25;        // Reduced from 0.6 - slower cruising
           
           // Find nearest asteroid
           let nearestAsteroid: Asteroid | null = null;
@@ -797,7 +797,7 @@ const AsteroidsGame = ({ onScoreChange, onGameOver, isPlaying = false }: Asteroi
           // Auto-fire when aimed at asteroid (within 15 degrees)
           if (nearestAsteroid && Math.abs(angleDiff) < 0.26) {
             autopilotFireCounter++;
-            if (autopilotFireCounter >= 12) { // Fire every 12 frames
+            if (autopilotFireCounter >= 30) { // Fire every 30 frames (~2 shots/sec) - slower & deliberate
               autopilotFireCounter = 0;
               fireBullet();
             }
