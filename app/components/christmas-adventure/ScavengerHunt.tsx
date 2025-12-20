@@ -46,7 +46,7 @@ const defaultItems: Omit<ScavengerItem, 'found'>[] = [
   { id: 'h2', category: 'hard', description: 'House with 50+ lights', points: 5, emoji: '🏠' },
   { id: 'h3', category: 'hard', description: 'Nativity scene', points: 5, emoji: '🌟' },
   { id: 'h4', category: 'hard', description: 'Live Christmas tree lot', points: 5, emoji: '🌲' },
-  { id: 'h5', category: 'hard', description: '"Merry Christmas" sign', points: 5, emoji: '🎊' },
+  { id: 'h5', category: 'hard', description: 'Merry Christmas sign', points: 5, emoji: '🎊' },
   { id: 'h6', category: 'hard', description: 'Train decoration or display', points: 5, emoji: '🚂' },
   
   // Bonus challenges (10 points each)
@@ -320,11 +320,11 @@ const ScavengerHunt = ({ players = [], onBack }: ScavengerHuntProps) => {
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
             <div className="bg-black/20 p-2 rounded">📸 Silliest face in front of decorations</div>
-            <div className="bg-black/20 p-2 rounded">📸 Best "surprised" Christmas face</div>
+            <div className="bg-black/20 p-2 rounded">📸 Best surprised Christmas face</div>
             <div className="bg-black/20 p-2 rounded">📸 Pretending to be a reindeer</div>
             <div className="bg-black/20 p-2 rounded">📸 Your favorite decoration</div>
             <div className="bg-black/20 p-2 rounded">📸 Family selfie by a Christmas tree</div>
-            <div className="bg-black/20 p-2 rounded">📸 Acting like you're opening a giant gift</div>
+            <div className="bg-black/20 p-2 rounded">📸 Acting like opening a giant gift</div>
           </div>
         </div>
       </div>
