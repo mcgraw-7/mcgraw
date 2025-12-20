@@ -157,12 +157,11 @@ export default function ChristmasAdventure() {
       <div className="relative z-10 max-w-4xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="text-6xl mb-4">🎄</div>
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-2 drop-shadow-lg">
             McGriswold Christmas Vacation
           </h1>
           <p className="text-xl text-blue-200">2025 Edition</p>
-          <p className="text-sm text-blue-300 mt-1">For Kinsley &amp; Emma</p>
+          <p className="text-sm text-blue-300 mt-1">For Kinsley and Emma</p>
           
           {/* Player badges */}
           {players.length > 0 && (
@@ -180,78 +179,123 @@ export default function ChristmasAdventure() {
                 onClick={() => setShowSetup(true)}
                 className="px-3 py-1 rounded-full text-sm bg-white/20 hover:bg-white/30 transition-colors"
               >
-                ✏️ Edit Players
+                Edit Players
               </button>
             </div>
           )}
         </div>
 
-        {/* Game Cards */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        {/* Game Cards - Stacked Layout */}
+        <div className="flex flex-col gap-6 mb-8">
+          
           {/* Christmas Pictionary */}
           <button
             onClick={() => setGameMode('pictionary')}
-            className="group bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-left hover:scale-105 transition-all duration-300 shadow-xl hover:shadow-purple-500/30"
+            className="group bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-left hover:scale-[1.02] transition-all duration-300 shadow-xl"
           >
-            <div className="text-5xl mb-4 group-hover:animate-bounce">🎨</div>
-            <h2 className="text-2xl font-bold text-white mb-2">Christmas Pictionary</h2>
-            <p className="text-purple-100 text-sm mb-4">
-              Draw and guess Christmas words! Take turns drawing on your tablet while the other guesses!</p>
+            <h2 className="text-2xl font-bold text-white mb-3">Christmas Pictionary</h2>
+            <p className="text-purple-100 mb-4">
+              A classic drawing and guessing game with a holiday twist! One player draws Christmas-themed words while the other tries to guess what it is.
+            </p>
+            <div className="bg-white/10 rounded-xl p-4 mb-4">
+              <h3 className="text-white font-semibold mb-2">How to Play:</h3>
+              <ol className="text-purple-100 text-sm space-y-1 list-decimal list-inside">
+                <li>One player creates a room and shares the code</li>
+                <li>The other player joins using the room code</li>
+                <li>Take turns drawing Christmas words on the canvas</li>
+                <li>Guess correctly to earn points - faster guesses = more points!</li>
+                <li>Play 6 rounds and see who wins</li>
+              </ol>
+            </div>
             <div className="flex gap-2 flex-wrap">
               <span className="px-2 py-1 bg-white/20 rounded text-xs">2 Players</span>
               <span className="px-2 py-1 bg-white/20 rounded text-xs">Cross-Device</span>
-              <span className="px-2 py-1 bg-white/20 rounded text-xs">Drawing Canvas</span>
+              <span className="px-2 py-1 bg-white/20 rounded text-xs">60 Second Rounds</span>
             </div>
           </button>
 
           {/* Christmas Battleship */}
           <button
             onClick={() => setGameMode('battleship')}
-            className="group bg-gradient-to-br from-sky-400 to-cyan-600 rounded-2xl p-6 text-left hover:scale-105 transition-all duration-300 shadow-xl hover:shadow-sky-400/30"
+            className="group bg-gradient-to-br from-sky-400 to-cyan-600 rounded-2xl p-6 text-left hover:scale-[1.02] transition-all duration-300 shadow-xl"
           >
-            <div className="text-5xl mb-4 group-hover:animate-bounce">⚓</div>
-            <h2 className="text-2xl font-bold text-white mb-2">Christmas Battleship</h2>
-            <p className="text-sky-100 text-sm mb-4">
-              Play on separate tablets! Sink Santa&apos;s sleigh, reindeer, and Christmas tree ships on a snowy sea!
+            <h2 className="text-2xl font-bold text-white mb-3">Christmas Battleship</h2>
+            <p className="text-sky-100 mb-4">
+              The classic naval battle game reimagined for Christmas! Hide your holiday fleet and try to sink your opponents ships on a snowy sea.
             </p>
+            <div className="bg-white/10 rounded-xl p-4 mb-4">
+              <h3 className="text-white font-semibold mb-2">How to Play:</h3>
+              <ol className="text-sky-100 text-sm space-y-1 list-decimal list-inside">
+                <li>One player creates a game room and shares the code</li>
+                <li>The other player joins with the room code</li>
+                <li>Each player secretly places their Christmas ships</li>
+                <li>Take turns tapping the grid to fire at opponents ships</li>
+                <li>First player to sink all enemy ships wins!</li>
+              </ol>
+            </div>
+            <div className="bg-white/10 rounded-xl p-4 mb-4">
+              <h3 className="text-white font-semibold mb-2">Your Fleet:</h3>
+              <ul className="text-sky-100 text-sm space-y-1">
+                <li>Sleigh (5 spaces) - Santas main ride</li>
+                <li>Reindeer Team (4 spaces) - The flying crew</li>
+                <li>Christmas Tree (3 spaces) - Festive and tall</li>
+                <li>Snowman (3 spaces) - Frosty friend</li>
+                <li>Present (2 spaces) - Small but valuable</li>
+              </ul>
+            </div>
             <div className="flex gap-2 flex-wrap">
               <span className="px-2 py-1 bg-white/20 rounded text-xs">2 Players</span>
               <span className="px-2 py-1 bg-white/20 rounded text-xs">Cross-Device</span>
-              <span className="px-2 py-1 bg-white/20 rounded text-xs">Room Codes</span>
+              <span className="px-2 py-1 bg-white/20 rounded text-xs">Turn-Based Strategy</span>
+            </div>
+          </button>
+
+          {/* Scavenger Hunt */}
+          <button
+            onClick={() => setGameMode('scavenger')}
+            className="group bg-gradient-to-br from-red-600 to-pink-700 rounded-2xl p-6 text-left hover:scale-[1.02] transition-all duration-300 shadow-xl"
+          >
+            <h2 className="text-2xl font-bold text-white mb-3">Road Trip Scavenger Hunt</h2>
+            <p className="text-red-100 mb-4">
+              Look out the window and spot Christmas items during the drive! Work together or compete to find holiday decorations, special cars, and more.
+            </p>
+            <div className="bg-white/10 rounded-xl p-4 mb-4">
+              <h3 className="text-white font-semibold mb-2">How to Play:</h3>
+              <ol className="text-red-100 text-sm space-y-1 list-decimal list-inside">
+                <li>Browse the list of items to find</li>
+                <li>When you spot something, tap the item to mark it found</li>
+                <li>Some items are worth more points than others</li>
+                <li>Try to find everything before the trip ends!</li>
+                <li>Your progress auto-saves so you can continue later</li>
+              </ol>
+            </div>
+            <div className="bg-white/10 rounded-xl p-4 mb-4">
+              <h3 className="text-white font-semibold mb-2">Item Categories:</h3>
+              <ul className="text-red-100 text-sm grid grid-cols-2 gap-1">
+                <li>Christmas Lights</li>
+                <li>Decorated Houses</li>
+                <li>Special Vehicles</li>
+                <li>Holiday Characters</li>
+                <li>Nature Items</li>
+                <li>Bonus Challenges</li>
+              </ul>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <span className="px-2 py-1 bg-white/20 rounded text-xs">26 Items</span>
+              <span className="px-2 py-1 bg-white/20 rounded text-xs">Auto-Save</span>
+              <span className="px-2 py-1 bg-white/20 rounded text-xs">Play Together</span>
             </div>
           </button>
         </div>
-
-        {/* Scavenger Hunt Card - Full Width */}
-        <button
-          onClick={() => setGameMode('scavenger')}
-          className="group w-full bg-gradient-to-br from-red-600 to-pink-700 rounded-2xl p-6 text-left hover:scale-[1.02] transition-all duration-300 shadow-xl hover:shadow-red-500/30 mb-8"
-        >
-          <div className="flex items-start gap-4">
-            <div className="text-5xl group-hover:animate-bounce">🔍</div>
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-white mb-2">Road Trip Scavenger Hunt</h2>
-              <p className="text-red-100 text-sm mb-4">
-                Spot Christmas decorations, cars, and more during your road trip! Track your finds and compete for points.
-              </p>
-              <div className="flex gap-2 flex-wrap">
-                <span className="px-2 py-1 bg-white/20 rounded text-xs">26 Items</span>
-                <span className="px-2 py-1 bg-white/20 rounded text-xs">Auto-Save</span>
-                <span className="px-2 py-1 bg-white/20 rounded text-xs">Photo Challenges</span>
-                <span className="px-2 py-1 bg-white/20 rounded text-xs">Cooperative</span>
-              </div>
-            </div>
-          </div>
-        </button>
 
         {/* No players prompt */}
         {players.length === 0 && (
           <div className="text-center">
             <button
               onClick={() => setShowSetup(true)}
-              className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-4 px-8 rounded-xl text-lg transition-colors shadow-lg hover:shadow-yellow-500/30"
+              className="bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-4 px-8 rounded-xl text-lg transition-colors shadow-lg"
             >
-              🎅 Add Players to Get Started!
+              Add Players to Get Started
             </button>
           </div>
         )}
@@ -261,7 +305,7 @@ export default function ChristmasAdventure() {
       {showSetup && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
           <div className="bg-gray-900 rounded-2xl p-6 max-w-md w-full border-2 border-green-500">
-            <h2 className="text-2xl font-bold text-white mb-4">👥 Player Setup</h2>
+            <h2 className="text-2xl font-bold text-white mb-4">Player Setup</h2>
             
             {/* Current players */}
             {players.length > 0 && (
@@ -279,7 +323,7 @@ export default function ChristmasAdventure() {
                         onClick={() => removePlayer(index)}
                         className="hover:text-red-300 font-bold"
                       >
-                        ×
+                        x
                       </button>
                     </div>
                   ))}
@@ -301,7 +345,7 @@ export default function ChristmasAdventure() {
                   }}
                   className="w-full bg-gradient-to-r from-pink-500 to-cyan-500 text-white font-bold py-3 rounded-xl mb-2"
                 >
-                  ⚡ Quick Add: Kinsley &amp; Emma
+                  Quick Add: Kinsley and Emma
                 </button>
                 <p className="text-center text-gray-500 text-xs">Or add custom players below</p>
               </div>
