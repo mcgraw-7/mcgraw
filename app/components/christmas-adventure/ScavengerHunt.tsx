@@ -21,39 +21,39 @@ interface ScavengerHuntProps {
 }
 
 const defaultItems: Omit<ScavengerItem, 'found'>[] = [
-  // Easy (1 point each)
-  { id: 'e1', category: 'easy', description: 'Christmas tree on a car roof', points: 1, emoji: '🎄' },
-  { id: 'e2', category: 'easy', description: 'Red truck or car', points: 1, emoji: '🚗' },
-  { id: 'e3', category: 'easy', description: 'Wreath on a door or window', points: 1, emoji: '🌿' },
-  { id: 'e4', category: 'easy', description: 'Christmas lights on a house', points: 1, emoji: '✨' },
-  { id: 'e5', category: 'easy', description: 'Green and red together', points: 1, emoji: '🔴' },
-  { id: 'e6', category: 'easy', description: 'Candy cane decoration', points: 1, emoji: '🍬' },
-  { id: 'e7', category: 'easy', description: 'Snowman decoration', points: 1, emoji: '⛄' },
-  { id: 'e8', category: 'easy', description: 'Star decoration', points: 1, emoji: '⭐' },
+  // Easy (1 point each) - Made 25% harder with more specific requirements
+  { id: 'e1', category: 'easy', description: 'Christmas tree tied to a car roof', points: 1, emoji: '🎄' },
+  { id: 'e2', category: 'easy', description: 'Red pickup truck', points: 1, emoji: '🚗' },
+  { id: 'e3', category: 'easy', description: 'Wreath with a red bow', points: 1, emoji: '🌿' },
+  { id: 'e4', category: 'easy', description: 'House with colored Christmas lights', points: 1, emoji: '✨' },
+  { id: 'e5', category: 'easy', description: 'Red and green decorations on same house', points: 1, emoji: '🔴' },
+  { id: 'e6', category: 'easy', description: 'Giant candy cane decoration (taller than you)', points: 1, emoji: '🍬' },
+  { id: 'e7', category: 'easy', description: 'Snowman with a hat and scarf', points: 1, emoji: '⛄' },
+  { id: 'e8', category: 'easy', description: 'Lit star on top of a tree or house', points: 1, emoji: '⭐' },
   
-  // Medium (3 points each)
-  { id: 'm1', category: 'medium', description: 'Inflatable yard decoration', points: 3, emoji: '🎈' },
-  { id: 'm2', category: 'medium', description: 'Reindeer antlers on a car', points: 3, emoji: '🦌' },
-  { id: 'm3', category: 'medium', description: 'Someone wearing a Santa hat', points: 3, emoji: '🎅' },
-  { id: 'm4', category: 'medium', description: 'Elf decoration', points: 3, emoji: '🧝' },
-  { id: 'm5', category: 'medium', description: 'Gingerbread decoration', points: 3, emoji: '🍪' },
-  { id: 'm6', category: 'medium', description: 'Angel decoration', points: 3, emoji: '👼' },
-  { id: 'm7', category: 'medium', description: 'Blue Christmas lights', points: 3, emoji: '💙' },
-  { id: 'm8', category: 'medium', description: 'Christmas sweater spotted', points: 3, emoji: '🧥' },
+  // Medium (3 points each) - Made 25% harder with specific details
+  { id: 'm1', category: 'medium', description: 'Inflatable Santa (not snowman)', points: 3, emoji: '🎈' },
+  { id: 'm2', category: 'medium', description: 'Car with BOTH antlers AND red nose', points: 3, emoji: '🦌' },
+  { id: 'm3', category: 'medium', description: 'Person wearing full Santa suit (not just hat)', points: 3, emoji: '🎅' },
+  { id: 'm4', category: 'medium', description: 'Elf decoration with pointy shoes visible', points: 3, emoji: '🧝' },
+  { id: 'm5', category: 'medium', description: 'Gingerbread house decoration (not just man)', points: 3, emoji: '🍪' },
+  { id: 'm6', category: 'medium', description: 'Lit angel decoration on rooftop', points: 3, emoji: '👼' },
+  { id: 'm7', category: 'medium', description: 'House with ONLY blue Christmas lights', points: 3, emoji: '💙' },
+  { id: 'm8', category: 'medium', description: 'Person wearing ugly Christmas sweater outside', points: 3, emoji: '🧥' },
   
-  // Hard (5 points each)
-  { id: 'h1', category: 'hard', description: 'Santa on a billboard or sign', points: 5, emoji: '📋' },
-  { id: 'h2', category: 'hard', description: 'House with 50+ lights', points: 5, emoji: '🏠' },
-  { id: 'h3', category: 'hard', description: 'Nativity scene', points: 5, emoji: '🌟' },
-  { id: 'h4', category: 'hard', description: 'Live Christmas tree lot', points: 5, emoji: '🌲' },
-  { id: 'h5', category: 'hard', description: 'Merry Christmas sign', points: 5, emoji: '🎊' },
-  { id: 'h6', category: 'hard', description: 'Train decoration or display', points: 5, emoji: '🚂' },
+  // Hard (5 points each) - Made 25% harder with challenging requirements
+  { id: 'h1', category: 'hard', description: 'Santa on a business billboard (not yard sign)', points: 5, emoji: '📋' },
+  { id: 'h2', category: 'hard', description: 'House with lights synced to music', points: 5, emoji: '🏠' },
+  { id: 'h3', category: 'hard', description: 'Complete nativity scene with 3+ figures', points: 5, emoji: '🌟' },
+  { id: 'h4', category: 'hard', description: 'Christmas tree lot with customers shopping', points: 5, emoji: '🌲' },
+  { id: 'h5', category: 'hard', description: 'Neon or LED Merry Christmas sign', points: 5, emoji: '🎊' },
+  { id: 'h6', category: 'hard', description: 'Moving train decoration (animated)', points: 5, emoji: '🚂' },
   
-  // Bonus challenges (10 points each)
-  { id: 'b1', category: 'bonus', description: 'All different colored houses in a row', points: 10, emoji: '🌈' },
-  { id: 'b2', category: 'bonus', description: 'Matching decorations on 3 houses', points: 10, emoji: '🏘️' },
-  { id: 'b3', category: 'bonus', description: 'Most creative decoration you see', points: 10, emoji: '🏆' },
-  { id: 'b4', category: 'bonus', description: 'Spot a dog in holiday gear', points: 10, emoji: '🐕' },
+  // Bonus challenges (10 points each) - Made 25% harder
+  { id: 'b1', category: 'bonus', description: '5 decorated houses in a row on same street', points: 10, emoji: '🌈' },
+  { id: 'b2', category: 'bonus', description: 'Same inflatable on 3 different houses', points: 10, emoji: '🏘️' },
+  { id: 'b3', category: 'bonus', description: 'Decoration that makes everyone say WOW', points: 10, emoji: '🏆' },
+  { id: 'b4', category: 'bonus', description: 'Dog wearing reindeer antlers OR Santa outfit', points: 10, emoji: '🐕' },
 ];
 
 const ScavengerHunt = ({ players = [], onBack }: ScavengerHuntProps) => {
