@@ -452,7 +452,10 @@ export default function Home() {
                 m.mcgraw
               </h1>
               <p className="text-neonGreen text-sm">
-                founder, mcgraw.io software studio
+                mcgraw.io software studio
+              </p>
+              <p className="text-neonGreen text-sm">
+                &amp; sr. software engineer @boozallen
               </p>
             </div>
 
@@ -493,6 +496,26 @@ export default function Home() {
             <div className="pl-4 border-l-2 border-neonGreen/30 mb-8">
               <p className="text-gray-300 leading-relaxed">
                 <span className="text-orange-500 font-semibold">Core Cracker</span> <span className="text-gray-500 text-xs">[solo project]</span> — Local development environment validation toolkit for VA enterprise applications on macOS ARM64. Automates verification of <span className="text-white">Zulu JDK 8</span>, <span className="text-white">WebLogic 12.2.1.4</span>, <span className="text-white">Maven</span>, and <span className="text-white">Docker/Colima</span> configurations. Includes auto-fix tools, properties backup/restore, and health diagnostics that map directly to the official VBMS Core deployment guide.
+              </p>
+            </div>
+
+            {/* Section 4: VA Acronyms Extension */}
+            <div className="text-green-400 mb-2 text-sm">
+              <span className="text-orange-500">$</span> cat ~/products/va-acronyms-extension.txt
+            </div>
+            <div className="pl-4 border-l-2 border-neonGreen/30 mb-8">
+              <p className="text-gray-300 leading-relaxed">
+                <span className="text-orange-500 font-semibold">VA Acronyms</span> <span className="text-gray-500 text-xs">[VS Code extension]</span> — Developer productivity extension for VA projects that expands and explains common acronyms inline while coding. It reduces context switching for onboarding and daily delivery work by surfacing domain-specific terminology directly in the editor.
+              </p>
+            </div>
+
+            {/* Section 5: AI Piloted Spaceship */}
+            <div className="text-green-400 mb-2 text-sm">
+              <span className="text-orange-500">$</span> cat ~/experiments/ai-piloted-spaceship.txt
+            </div>
+            <div className="pl-4 border-l-2 border-neonGreen/30 mb-8">
+              <p className="text-gray-300 leading-relaxed">
+                <span className="text-orange-500 font-semibold">AI-piloted spaceship demo</span> <span className="text-gray-500 text-xs">[interactive feature]</span> — The ship flying around this homepage is part of a real-time browser simulation focused on responsive controls, collision behavior, and dynamic scene updates. It demonstrates practical front-end engineering for interactive products, including game-loop logic, state management, and performance-aware rendering patterns.
               </p>
             </div>
 
