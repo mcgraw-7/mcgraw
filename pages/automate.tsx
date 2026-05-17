@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import React from 'react';
 import Link from 'next/link';
 
@@ -134,13 +134,8 @@ export default function Automate() {
   const [dashboardSlide, setDashboardSlide] = useState(0);
   const dashboardCount = 2;
 
-  const nextDashboard = useCallback(() => setDashboardSlide((prev) => (prev + 1) % dashboardCount), []);
+  const nextDashboard = () => setDashboardSlide((prev) => (prev + 1) % dashboardCount);
   const prevDashboard = () => setDashboardSlide((prev) => (prev - 1 + dashboardCount) % dashboardCount);
-
-  useEffect(() => {
-    const timer = setInterval(nextDashboard, 8000);
-    return () => clearInterval(timer);
-  }, [nextDashboard]);
 
   return (
     <div className={theme === 'dark' ? 'dark' : ''}>
