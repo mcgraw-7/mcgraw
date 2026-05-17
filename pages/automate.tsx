@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import React from 'react';
 import Link from 'next/link';
 
@@ -130,6 +130,17 @@ export default function Automate() {
 
   const nextDemoStep = () => setDemoStep((prev) => (prev + 1) % demoSteps.length);
   const prevDemoStep = () => setDemoStep((prev) => (prev - 1 + demoSteps.length) % demoSteps.length);
+
+  const [dashboardSlide, setDashboardSlide] = useState(0);
+  const dashboardCount = 2;
+
+  const nextDashboard = useCallback(() => setDashboardSlide((prev) => (prev + 1) % dashboardCount), []);
+  const prevDashboard = () => setDashboardSlide((prev) => (prev - 1 + dashboardCount) % dashboardCount);
+
+  useEffect(() => {
+    const timer = setInterval(nextDashboard, 8000);
+    return () => clearInterval(timer);
+  }, [nextDashboard]);
 
   return (
     <div className={theme === 'dark' ? 'dark' : ''}>
@@ -360,90 +371,193 @@ export default function Automate() {
           </div>
         </section>
 
-        {/* Landscaper Dashboard Demo */}
+        {/* Dashboard Demo Slider */}
         <section id="landscaper-dashboard" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 text-center">
-            Custom Landscaper Operations Dashboard
+            Custom Dashboards Built for Your Business
           </h2>
-          <p className="text-center text-gray-600 dark:text-gray-300 mb-12 text-lg max-w-3xl mx-auto">
-            A practical dashboard demo for landscaping teams that tracks leads, jobs, crews, and revenue in one place.
-            This is the kind of view we can tailor to your exact workflow.
+          <p className="text-center text-gray-600 dark:text-gray-300 mb-8 text-lg max-w-3xl mx-auto">
+            Every industry has its own workflow. These are examples of what a tailored dashboard looks like in practice.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-            <Card className="border border-green-200 dark:border-green-800">
-              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">New Leads</div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">14</div>
-              <div className="text-sm text-green-600 dark:text-green-400 mt-1">+27% this week</div>
-            </Card>
-            <Card className="border border-green-200 dark:border-green-800">
-              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Jobs Scheduled</div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">23</div>
-              <div className="text-sm text-green-600 dark:text-green-400 mt-1">6 for tomorrow</div>
-            </Card>
-            <Card className="border border-green-200 dark:border-green-800">
-              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Active Crews</div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">5</div>
-              <div className="text-sm text-green-600 dark:text-green-400 mt-1">2 currently onsite</div>
-            </Card>
-            <Card className="border border-green-200 dark:border-green-800">
-              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Monthly Revenue</div>
-              <div className="text-3xl font-bold text-gray-900 dark:text-white">$42,800</div>
-              <div className="text-sm text-green-600 dark:text-green-400 mt-1">+11% vs last month</div>
-            </Card>
+          {/* Slider controls */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex gap-3 items-center">
+              {['Landscaping', 'Home Massage'].map((label, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setDashboardSlide(idx)}
+                  className={`px-4 py-1.5 rounded-full text-sm font-semibold transition-all duration-200 ${
+                    dashboardSlide === idx
+                      ? 'bg-green-600 text-white'
+                      : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <button onClick={prevDashboard} className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                <i className="fas fa-chevron-left text-green-600 dark:text-green-400"></i>
+              </button>
+              <button onClick={nextDashboard} className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                <i className="fas fa-chevron-right text-green-600 dark:text-green-400"></i>
+              </button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2">
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Job Pipeline</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-4 border border-amber-200 dark:border-amber-800">
-                  <div className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300 mb-3">Needs Quote</div>
-                  <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                    <li className="flex justify-between"><span>Backyard cleanup</span><span>$950</span></li>
-                    <li className="flex justify-between"><span>Mulch refresh</span><span>$680</span></li>
-                    <li className="flex justify-between"><span>Patio extension</span><span>$4,200</span></li>
-                  </ul>
+          {/* Slide: Landscaper */}
+          <div className={`transition-all duration-500 ${dashboardSlide === 0 ? 'block' : 'hidden'}`}>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <Card className="border border-green-200 dark:border-green-800">
+                <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">New Leads</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">14</div>
+                <div className="text-sm text-green-600 dark:text-green-400 mt-1">+27% this week</div>
+              </Card>
+              <Card className="border border-green-200 dark:border-green-800">
+                <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Jobs Scheduled</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">23</div>
+                <div className="text-sm text-green-600 dark:text-green-400 mt-1">6 for tomorrow</div>
+              </Card>
+              <Card className="border border-green-200 dark:border-green-800">
+                <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Active Crews</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">5</div>
+                <div className="text-sm text-green-600 dark:text-green-400 mt-1">2 currently onsite</div>
+              </Card>
+              <Card className="border border-green-200 dark:border-green-800">
+                <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Monthly Revenue</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">$42,800</div>
+                <div className="text-sm text-green-600 dark:text-green-400 mt-1">+11% vs last month</div>
+              </Card>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="lg:col-span-2">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Job Pipeline</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-4 border border-amber-200 dark:border-amber-800">
+                    <div className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300 mb-3">Needs Quote</div>
+                    <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                      <li className="flex justify-between"><span>Backyard cleanup</span><span>$950</span></li>
+                      <li className="flex justify-between"><span>Mulch refresh</span><span>$680</span></li>
+                      <li className="flex justify-between"><span>Patio extension</span><span>$4,200</span></li>
+                    </ul>
+                  </div>
+                  <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4 border border-blue-200 dark:border-blue-800">
+                    <div className="text-xs font-semibold uppercase text-blue-700 dark:text-blue-300 mb-3">Scheduled</div>
+                    <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                      <li className="flex justify-between"><span>Fence line trim</span><span>Mon</span></li>
+                      <li className="flex justify-between"><span>Lawn install</span><span>Tue</span></li>
+                      <li className="flex justify-between"><span>Retaining wall</span><span>Thu</span></li>
+                    </ul>
+                  </div>
+                  <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800">
+                    <div className="text-xs font-semibold uppercase text-green-700 dark:text-green-300 mb-3">Completed</div>
+                    <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                      <li className="flex justify-between"><span>Spring cleanup</span><span>$1,200</span></li>
+                      <li className="flex justify-between"><span>Sod repair</span><span>$740</span></li>
+                      <li className="flex justify-between"><span>Drainage fix</span><span>$2,100</span></li>
+                    </ul>
+                  </div>
                 </div>
-                <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4 border border-blue-200 dark:border-blue-800">
-                  <div className="text-xs font-semibold uppercase text-blue-700 dark:text-blue-300 mb-3">Scheduled</div>
-                  <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                    <li className="flex justify-between"><span>Fence line trim</span><span>Mon</span></li>
-                    <li className="flex justify-between"><span>Lawn install</span><span>Tue</span></li>
-                    <li className="flex justify-between"><span>Retaining wall</span><span>Thu</span></li>
-                  </ul>
+              </Card>
+              <Card>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Today&apos;s Crew Board</h3>
+                <ul className="space-y-3 text-sm">
+                  <li className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                    <div className="font-semibold text-gray-900 dark:text-white">Crew A — Eastside</div>
+                    <div className="text-gray-600 dark:text-gray-400">2 jobs, ETA 4:30 PM</div>
+                  </li>
+                  <li className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                    <div className="font-semibold text-gray-900 dark:text-white">Crew B — River District</div>
+                    <div className="text-gray-600 dark:text-gray-400">1 large install, on schedule</div>
+                  </li>
+                  <li className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                    <div className="font-semibold text-gray-900 dark:text-white">Crew C — North Loop</div>
+                    <div className="text-gray-600 dark:text-gray-400">Rain delay, auto-reschedule sent</div>
+                  </li>
+                </ul>
+                <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                  Automated updates can text customers, notify crew leads, and sync job status to your CRM in real time.
                 </div>
-                <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800">
-                  <div className="text-xs font-semibold uppercase text-green-700 dark:text-green-300 mb-3">Completed</div>
-                  <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-                    <li className="flex justify-between"><span>Spring cleanup</span><span>$1,200</span></li>
-                    <li className="flex justify-between"><span>Sod repair</span><span>$740</span></li>
-                    <li className="flex justify-between"><span>Drainage fix</span><span>$2,100</span></li>
-                  </ul>
-                </div>
-              </div>
-            </Card>
+              </Card>
+            </div>
+          </div>
 
-            <Card>
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Today&apos;s Crew Board</h3>
-              <ul className="space-y-3 text-sm">
-                <li className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-                  <div className="font-semibold text-gray-900 dark:text-white">Crew A - Eastside</div>
-                  <div className="text-gray-600 dark:text-gray-400">2 jobs, ETA 4:30 PM</div>
-                </li>
-                <li className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-                  <div className="font-semibold text-gray-900 dark:text-white">Crew B - River District</div>
-                  <div className="text-gray-600 dark:text-gray-400">1 large install, on schedule</div>
-                </li>
-                <li className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-                  <div className="font-semibold text-gray-900 dark:text-white">Crew C - North Loop</div>
-                  <div className="text-gray-600 dark:text-gray-400">Rain delay, auto-reschedule sent</div>
-                </li>
-              </ul>
-              <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
-                Automated updates can text customers, notify crew leads, and sync job status to your CRM in real time.
-              </div>
-            </Card>
+          {/* Slide: Home Massage */}
+          <div className={`transition-all duration-500 ${dashboardSlide === 1 ? 'block' : 'hidden'}`}>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+              <Card className="border border-purple-200 dark:border-purple-800">
+                <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Bookings This Week</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">18</div>
+                <div className="text-sm text-purple-600 dark:text-purple-400 mt-1">3 new since yesterday</div>
+              </Card>
+              <Card className="border border-purple-200 dark:border-purple-800">
+                <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Avg Session Value</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">$110</div>
+                <div className="text-sm text-purple-600 dark:text-purple-400 mt-1">60-min standard rate</div>
+              </Card>
+              <Card className="border border-purple-200 dark:border-purple-800">
+                <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Returning Clients</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">74%</div>
+                <div className="text-sm text-purple-600 dark:text-purple-400 mt-1">+8% vs last quarter</div>
+              </Card>
+              <Card className="border border-purple-200 dark:border-purple-800">
+                <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Monthly Revenue</div>
+                <div className="text-3xl font-bold text-gray-900 dark:text-white">$5,940</div>
+                <div className="text-sm text-purple-600 dark:text-purple-400 mt-1">On track for best month</div>
+              </Card>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <Card className="lg:col-span-2">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Appointment Schedule</h3>
+                <div className="space-y-3 text-sm">
+                  {[
+                    { time: '9:00 AM', client: 'Sarah M.', service: '90-min deep tissue', status: 'Confirmed', color: 'green' },
+                    { time: '11:00 AM', client: 'James T.', service: '60-min swedish', status: 'Confirmed', color: 'green' },
+                    { time: '1:30 PM', client: 'Priya K.', service: '60-min prenatal', status: 'Pending deposit', color: 'amber' },
+                    { time: '3:00 PM', client: 'Open slot', service: '—', status: 'Available', color: 'blue' },
+                    { time: '4:30 PM', client: 'Rachel D.', service: '90-min hot stone', status: 'Confirmed', color: 'green' },
+                  ].map(({ time, client, service, status, color }) => (
+                    <div key={time} className="flex items-center gap-4 p-3 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <div className="w-16 text-xs font-mono text-gray-500 dark:text-gray-400 shrink-0">{time}</div>
+                      <div className="flex-1">
+                        <div className="font-semibold text-gray-900 dark:text-white">{client}</div>
+                        <div className="text-gray-500 dark:text-gray-400">{service}</div>
+                      </div>
+                      <div className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                        color === 'green' ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' :
+                        color === 'amber' ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300' :
+                        'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300'
+                      }`}>{status}</div>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+              <Card>
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Client Activity</h3>
+                <ul className="space-y-3 text-sm">
+                  <li className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                    <div className="font-semibold text-gray-900 dark:text-white">New inquiry — text</div>
+                    <div className="text-gray-600 dark:text-gray-400">&quot;Do you have availability this Saturday?&quot;</div>
+                    <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">Auto-reply sent, slot offered</div>
+                  </li>
+                  <li className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                    <div className="font-semibold text-gray-900 dark:text-white">Deposit reminder sent</div>
+                    <div className="text-gray-600 dark:text-gray-400">Priya K. — 1:30 PM slot holds 24 hrs</div>
+                    <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">Automated follow-up scheduled</div>
+                  </li>
+                  <li className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                    <div className="font-semibold text-gray-900 dark:text-white">Rebooking nudge</div>
+                    <div className="text-gray-600 dark:text-gray-400">4 clients due for monthly session</div>
+                    <div className="text-xs text-purple-600 dark:text-purple-400 mt-1">Text campaign queued for 10 AM</div>
+                  </li>
+                </ul>
+                <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                  Booking confirmations, deposit requests, and rebooking nudges all run automatically.
+                </div>
+              </Card>
+            </div>
           </div>
         </section>
 
