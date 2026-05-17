@@ -106,6 +106,32 @@ function PackageCard({ title, features, highlight = false, price }: PackageCardP
 export default function Automate() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
   const [demoStep, setDemoStep] = useState(0);
+  const [showModal, setShowModal] = useState(false);
+  const [formState, setFormState] = useState({ name: '', email: '', message: '' });
+  const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+
+  const openModal = () => setShowModal(true);
+  const closeModal = () => { setShowModal(false); setFormStatus('idle'); };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormStatus('submitting');
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formState, source: 'automate' }),
+      });
+      if (res.ok) {
+        setFormStatus('success');
+        setFormState({ name: '', email: '', message: '' });
+      } else {
+        setFormStatus('error');
+      }
+    } catch {
+      setFormStatus('error');
+    }
+  };
 
   const toggleTheme = () => {
     const next = theme === 'light' ? 'dark' : 'light';
@@ -140,6 +166,73 @@ export default function Automate() {
   return (
     <div className={theme === 'dark' ? 'dark' : ''}>
       <div className="bg-white dark:bg-gray-950 text-gray-900 dark:text-white">
+
+        {/* Contact Modal */}
+        {showModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60" onClick={closeModal} />
+            <div className="relative bg-white dark:bg-gray-900 rounded-xl shadow-xl w-full max-w-lg p-8 border border-gray-200 dark:border-gray-700">
+              <button onClick={closeModal} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                <i className="fas fa-times text-lg"></i>
+              </button>
+              {formStatus === 'success' ? (
+                <div className="text-center py-8">
+                  <div className="text-5xl mb-4 text-green-600 dark:text-green-400"><i className="fas fa-check-circle"></i></div>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Got it.</h3>
+                  <p className="text-gray-600 dark:text-gray-300">I&apos;ll be in touch within one business day.</p>
+                  <button onClick={closeModal} className="mt-6 px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors">Close</button>
+                </div>
+              ) : (
+                <>
+                  <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Book a Free Tech Audit</h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6 text-sm">Tell me a bit about your business and I&apos;ll follow up within one business day.</p>
+                  <form onSubmit={handleFormSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={formState.name}
+                        onChange={(e) => setFormState(s => ({ ...s, name: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-green-500"
+                        placeholder="Your name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+                      <input
+                        type="email"
+                        required
+                        value={formState.email}
+                        onChange={(e) => setFormState(s => ({ ...s, email: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-green-500"
+                        placeholder="you@yourbusiness.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">What&apos;s your biggest operational headache?</label>
+                      <textarea
+                        rows={3}
+                        value={formState.message}
+                        onChange={(e) => setFormState(s => ({ ...s, message: e.target.value }))}
+                        className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:border-green-500 resize-none"
+                        placeholder="e.g. we miss leads that come in via text and email..."
+                      />
+                    </div>
+                    {formStatus === 'error' && <p className="text-red-500 text-sm">Something went wrong. Try again or email michael@mcgraw.io directly.</p>}
+                    <button
+                      type="submit"
+                      disabled={formStatus === 'submitting'}
+                      className="w-full py-3 rounded-lg bg-green-600 hover:bg-green-700 text-white font-semibold transition-colors disabled:opacity-60"
+                    >
+                      {formStatus === 'submitting' ? 'Sending...' : 'Send Request'}
+                    </button>
+                  </form>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Inline page sub-nav with theme toggle */}
         <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
@@ -180,7 +273,7 @@ export default function Automate() {
                 mcgraw.io helps small businesses streamline websites, workflows, forms, dashboards, customer follow-ups, and practical AI automations without enterprise complexity.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button variant="primary" size="lg" onClick={() => scrollTo('cta-final')}>
+                <Button variant="primary" size="lg" onClick={openModal}>
                   <i className="fas fa-calendar-check mr-2"></i>
                   Book a Free Tech Audit
                 </Button>
@@ -631,13 +724,13 @@ export default function Automate() {
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
             Every business is different. Let&apos;s talk about what would actually save you time and money.
           </p>
-          <a
-            href="mailto:michael@mcgraw.io?subject=automate"
+          <button
+            onClick={openModal}
             className="inline-flex items-center justify-center rounded-lg bg-green-600 px-8 py-4 text-lg font-semibold text-white transition-colors hover:bg-green-700"
           >
             <i className="fas fa-calendar-check mr-2"></i>
             Book a Free Tech Audit
-          </a>
+          </button>
         </section>
 
         {/* Footer */}
