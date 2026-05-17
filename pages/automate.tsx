@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import React from 'react';
+import Link from 'next/link';
 
 // Inline components
 
@@ -137,7 +138,13 @@ export default function Automate() {
         {/* Inline page sub-nav with theme toggle */}
         <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center gap-4">
+              <Link
+                href="/"
+                className="text-sm font-semibold text-gray-700 dark:text-gray-200 hover:text-green-600 dark:hover:text-green-400 transition-colors"
+              >
+                Home
+              </Link>
               <div className="hidden md:flex space-x-6 text-sm">
                 <a href="#services" className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">Services</a>
                 <a href="#demo" className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">See It Work</a>

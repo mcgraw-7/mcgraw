@@ -452,17 +452,17 @@ export default function Home() {
                 m.mcgraw
               </h1>
               <p className="text-neonGreen text-sm">
-                software engineer @ booz allen hamilton
+                founder, mcgraw.io software studio
               </p>
             </div>
 
             {/* Section 1: Current Role */}
             <div className="text-green-400 mb-2 text-sm">
-              <span className="text-orange-500">$</span> cat ~/booz-allen/current-role.txt
+              <span className="text-orange-500">$</span> cat ~/mcgraw-io/company-profile.txt
             </div>
             <div className="pl-4 border-l-2 border-neonGreen/30 mb-8">
               <p className="text-gray-300 leading-relaxed">
-                Software Engineer at <span className="text-orange-500 font-semibold">Booz Allen Hamilton</span>, developing enterprise web applications for federal government clients. Tech stack includes <span className="text-white">Java</span>, <span className="text-white">JavaScript/jQuery</span>, <span className="text-white">React</span>, <span className="text-white">Python</span>, <span className="text-white">Shell scripting (Bash/Zsh)</span>, <span className="text-white">SQL</span>, <span className="text-white">WebLogic 12c/14</span>, <span className="text-white">JSP</span>, <span className="text-white">CSS</span>, <span className="text-white">SAML/SSO</span>, <span className="text-white">Docker</span>, <span className="text-white">Git/GitHub</span>, <span className="text-white">Jenkins CI/CD</span>, and <span className="text-white">Maven</span>. Day-to-day work involves full-stack development, debugging production issues, writing automation scripts, and code archaeology through git history.
+                <span className="text-orange-500 font-semibold">mcgraw.io</span> builds custom software, automation systems, and AI-assisted workflows for small and midsize businesses. Core delivery includes product design, full-stack web apps, systems integrations, and operational tooling that reduce manual work and increase conversion speed. Primary stack includes <span className="text-white">TypeScript</span>, <span className="text-white">React/Next.js</span>, <span className="text-white">Node.js</span>, <span className="text-white">Python</span>, <span className="text-white">SQL</span>, <span className="text-white">Docker</span>, <span className="text-white">GitHub</span>, and <span className="text-white">CI/CD automation</span>.
               </p>
             </div>
 
@@ -472,7 +472,7 @@ export default function Home() {
             </div>
             <div className="pl-4 border-l-2 border-orange-500/30 mb-4">
               <p className="text-gray-400 text-sm italic">
-                Independent initiatives developed on personal time to solve real problems encountered at work.
+                Product and platform initiatives developed to improve accessibility, reliability, and automation outcomes for real client workflows.
               </p>
             </div>
 
@@ -525,6 +525,9 @@ export default function Home() {
                 <Link href="/more" className="text-gray-300 hover:text-orange-500 transition-colors">
                   <span className="text-neonGreen">→</span> more/
                 </Link>
+                <Link href="/automate" className="text-gray-300 hover:text-orange-500 transition-colors">
+                  <span className="text-neonGreen">→</span> automate/
+                </Link>
                 <a 
                   href="https://github.com/mmcgraw73" 
                   target="_blank" 
@@ -544,30 +547,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Status section */}
-            <div className="pt-6 border-t border-gray-700">
-              <div className="text-green-400 mb-3 text-sm">
-                <span className="text-orange-500">$</span> cat ./status.log
-              </div>
-              <div className="pl-4 space-y-2">
-                <p className="text-orange-500 text-sm flex items-center gap-2">
-                  <span className="text-gray-500">[INFO]</span> this portfolio is currently being built with next.js &amp; typescript
-                </p>
-                <p className="text-orange-500 text-sm flex items-center gap-2">
-                  <span className="text-gray-500">[INFO]</span> check back often for additional content and updates
-                </p>
-                <a 
-                  href="https://github.com/mmcgraw73/mcgraw" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-orange-500 text-sm flex items-center gap-2 hover:text-neonGreen transition-colors group"
-                >
-                  <span className="text-gray-500">[LINK]</span> 
-                  src @github 
-                  <span className="text-neonGreen opacity-0 group-hover:opacity-100 transition-opacity">→</span>
-                </a>
-              </div>
-            </div>
           </div>
 
           {/* Terminal Footer */}
