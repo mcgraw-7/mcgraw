@@ -22,6 +22,11 @@ const Nav = () => {
           </Link>
         </li>
         <li>
+          <Link href="/automate">
+            automate
+          </Link>
+        </li>
+        <li>
           <Link href="https://github.com/mmcgraw73/mcgraw">
             <i className="fa-brands fa-github-alt"></i>
           </Link>
