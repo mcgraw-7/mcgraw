@@ -148,6 +148,7 @@ export default function Automate() {
               <div className="hidden md:flex space-x-6 text-sm">
                 <a href="#services" className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">Services</a>
                 <a href="#demo" className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">See It Work</a>
+                <a href="#landscaper-dashboard" className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">Dashboard Demo</a>
                 <a href="#packages" className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">Packages</a>
                 <a href="#contact" className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">Contact</a>
               </div>
@@ -356,6 +357,93 @@ export default function Automate() {
                 </div>
               </Card>
             </div>
+          </div>
+        </section>
+
+        {/* Landscaper Dashboard Demo */}
+        <section id="landscaper-dashboard" className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4 text-center">
+            Custom Landscaper Operations Dashboard
+          </h2>
+          <p className="text-center text-gray-600 dark:text-gray-300 mb-12 text-lg max-w-3xl mx-auto">
+            A practical dashboard demo for landscaping teams that tracks leads, jobs, crews, and revenue in one place.
+            This is the kind of view we can tailor to your exact workflow.
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <Card className="border border-green-200 dark:border-green-800">
+              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">New Leads</div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">14</div>
+              <div className="text-sm text-green-600 dark:text-green-400 mt-1">+27% this week</div>
+            </Card>
+            <Card className="border border-green-200 dark:border-green-800">
+              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Jobs Scheduled</div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">23</div>
+              <div className="text-sm text-green-600 dark:text-green-400 mt-1">6 for tomorrow</div>
+            </Card>
+            <Card className="border border-green-200 dark:border-green-800">
+              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Active Crews</div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">5</div>
+              <div className="text-sm text-green-600 dark:text-green-400 mt-1">2 currently onsite</div>
+            </Card>
+            <Card className="border border-green-200 dark:border-green-800">
+              <div className="text-xs uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">Monthly Revenue</div>
+              <div className="text-3xl font-bold text-gray-900 dark:text-white">$42,800</div>
+              <div className="text-sm text-green-600 dark:text-green-400 mt-1">+11% vs last month</div>
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Card className="lg:col-span-2">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Job Pipeline</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 p-4 border border-amber-200 dark:border-amber-800">
+                  <div className="text-xs font-semibold uppercase text-amber-700 dark:text-amber-300 mb-3">Needs Quote</div>
+                  <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                    <li className="flex justify-between"><span>Backyard cleanup</span><span>$950</span></li>
+                    <li className="flex justify-between"><span>Mulch refresh</span><span>$680</span></li>
+                    <li className="flex justify-between"><span>Patio extension</span><span>$4,200</span></li>
+                  </ul>
+                </div>
+                <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-4 border border-blue-200 dark:border-blue-800">
+                  <div className="text-xs font-semibold uppercase text-blue-700 dark:text-blue-300 mb-3">Scheduled</div>
+                  <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                    <li className="flex justify-between"><span>Fence line trim</span><span>Mon</span></li>
+                    <li className="flex justify-between"><span>Lawn install</span><span>Tue</span></li>
+                    <li className="flex justify-between"><span>Retaining wall</span><span>Thu</span></li>
+                  </ul>
+                </div>
+                <div className="rounded-lg bg-green-50 dark:bg-green-900/20 p-4 border border-green-200 dark:border-green-800">
+                  <div className="text-xs font-semibold uppercase text-green-700 dark:text-green-300 mb-3">Completed</div>
+                  <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                    <li className="flex justify-between"><span>Spring cleanup</span><span>$1,200</span></li>
+                    <li className="flex justify-between"><span>Sod repair</span><span>$740</span></li>
+                    <li className="flex justify-between"><span>Drainage fix</span><span>$2,100</span></li>
+                  </ul>
+                </div>
+              </div>
+            </Card>
+
+            <Card>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Today&apos;s Crew Board</h3>
+              <ul className="space-y-3 text-sm">
+                <li className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                  <div className="font-semibold text-gray-900 dark:text-white">Crew A - Eastside</div>
+                  <div className="text-gray-600 dark:text-gray-400">2 jobs, ETA 4:30 PM</div>
+                </li>
+                <li className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                  <div className="font-semibold text-gray-900 dark:text-white">Crew B - River District</div>
+                  <div className="text-gray-600 dark:text-gray-400">1 large install, on schedule</div>
+                </li>
+                <li className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+                  <div className="font-semibold text-gray-900 dark:text-white">Crew C - North Loop</div>
+                  <div className="text-gray-600 dark:text-gray-400">Rain delay, auto-reschedule sent</div>
+                </li>
+              </ul>
+              <div className="mt-4 text-sm text-gray-600 dark:text-gray-400">
+                Automated updates can text customers, notify crew leads, and sync job status to your CRM in real time.
+              </div>
+            </Card>
           </div>
         </section>
 
