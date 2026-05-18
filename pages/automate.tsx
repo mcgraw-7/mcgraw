@@ -249,6 +249,7 @@ export default function Automate() {
                 <a href="#demo" className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">See It Work</a>
                 <a href="#landscaper-dashboard" className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">Dashboard Demo</a>
                 <a href="#packages" className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">Packages</a>
+                <Link href="/how-it-works" className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">How It Works</Link>
                 <a href="#contact" className="text-gray-700 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors">Contact</a>
               </div>
               <button
@@ -281,6 +282,13 @@ export default function Automate() {
                   <i className="fas fa-lightbulb mr-2"></i>
                   See Automation Ideas
                 </Button>
+                <Link
+                  href="/how-it-works"
+                  className="inline-flex items-center gap-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors underline underline-offset-4"
+                >
+                  <i className="fas fa-microchip text-xs"></i>
+                  Tech details
+                </Link>
               </div>
             </div>
             <div className="hidden md:block">
